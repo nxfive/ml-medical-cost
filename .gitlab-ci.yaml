@@ -1,3 +1,0 @@
-include:
-  - project: 'ml-medical-cost'
-    file: 'project/.gitlab-ci.yaml'
