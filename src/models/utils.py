@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from typing import Sequence
 from sklearn.metrics import r2_score, mean_absolute_error, root_mean_squared_error
 from sklearn.model_selection import KFold
 
@@ -57,3 +58,16 @@ def get_metrics(
     }
 
     return metrics
+
+
+def check_fold_stability(folds_scores: Sequence[float], threshold: float = 0.1) -> bool:
+    """
+    Checks the stability of a model based on cross-validation fold scores.
+    """
+    max_score = max(folds_scores)
+    min_score = min(folds_scores)
+    difference = max_score - min_score
+    
+    print(f"Fold scores: {folds_scores}, max-min difference: {difference:.3f}")
+    
+    return difference <= threshold
