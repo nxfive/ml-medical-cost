@@ -1,3 +1,4 @@
+from sklearn.model_selection import KFold
 from src.models.settings import pipeline_config
 
 
@@ -20,3 +21,14 @@ def prepare_grid(model: type) -> dict:
         param_grid = update_param_grid(model_params, "model")
 
     return param_grid
+
+
+def get_cv() -> KFold:
+    """
+    Returns a KFold cross-validator configured based on the values from pipeline_config.
+    """
+    return KFold(
+        n_splits=pipeline_config.cv["n_splits"], 
+        shuffle=pipeline_config.cv["shuffle"], 
+        random_state=pipeline_config.cv["random_state"]
+    )
