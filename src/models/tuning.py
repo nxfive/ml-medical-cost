@@ -1,10 +1,13 @@
 import numpy as np
 import pandas as pd
-from typing import Sequence
+from typing import Generator, Sequence
+from sklearn.compose import TransformedTargetRegressor
 from sklearn.model_selection import GridSearchCV, cross_val_score
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import FunctionTransformer, Pipeline
+from sklearn.preprocessing import QuantileTransformer
 
-from src.models.utils import get_cv
+from src.models.settings import pipeline_config
+from src.models.utils import get_cv, update_param_grid
 
 
 def perform_cross_validation(
@@ -58,3 +61,36 @@ def perform_grid_search(
     folds_scores_mean = np.mean(folds_scores)
 
     return gs, folds_scores, folds_scores_mean, y_train_pred, y_test_pred
+
+
+def evaluate_target_transformers(
+    inner_pipeline: Pipeline, 
+    param_grid: dict[str, list]
+) -> Generator[tuple[Pipeline | TransformedTargetRegressor, dict[str, list], str], None, None]:
+    """
+    Generates pipelines with different target transformations and updated parameter grids.
+    """
+    transformer_map = {
+        "log": FunctionTransformer(np.log, inverse_func=np.exp),
+        "quantile": QuantileTransformer(output_distribution="normal", n_quantiles=100),
+        "none": None,
+    }
+
+    for transformation, value in pipeline_config.transformations.items():
+        local_param_grid = param_grid.copy()
+
+        transformer = transformer_map[transformation]
+        params = value["params"]
+
+        if transformer is not None:
+            ttr = TransformedTargetRegressor(
+                regressor=inner_pipeline, transformer=transformer
+            )
+            local_param_grid = update_param_grid(local_param_grid, "regressor")
+        else:
+            ttr = inner_pipeline
+
+        if params:
+            local_param_grid.update(update_param_grid(params, "transformer"))
+
+        yield ttr, local_param_grid, transformation
