@@ -71,3 +71,15 @@ def check_fold_stability(folds_scores: Sequence[float], threshold: float = 0.1) 
     print(f"Fold scores: {folds_scores}, max-min difference: {difference:.3f}")
     
     return difference <= threshold
+
+
+def check_overfitting(train_r2: float, test_r2: float, threshold: float = 0.2) -> bool:
+    """
+    Checks whether a model is likely overfitting based on the difference between 
+    training and test R² scores.
+    """
+    difference = train_r2 - test_r2
+
+    print(f"Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, Difference: {difference:.3f}")
+
+    return difference > threshold
