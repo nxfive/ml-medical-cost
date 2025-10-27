@@ -1,3 +1,4 @@
+from sklearn.base import BaseEstimator
 from sklearn.preprocessing import StandardScaler, OneHotEncoder 
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -26,11 +27,20 @@ def get_preprocessor(model: type) -> ColumnTransformer:
         ])
 
 
-def create_model_pipeline(model: type) -> Pipeline:
+def create_model_pipeline(model: type[BaseEstimator] = None, model_instance: BaseEstimator = None) -> Pipeline:
     """
-    Creates a pipeline for a given model with custom preprocessing.
+    Creates a pipeline for a given model class or instance with custom preprocessing.
+    One of `model` or `model_instance` must be provided.
     """
-    return Pipeline([
-        ("preprocessor", get_preprocessor(model)),
-        ("model", model())
-    ])
+    if model_instance is not None:
+        return Pipeline([
+            ("preprocessor", get_preprocessor(type(model_instance))),
+            ("model", model_instance)
+        ])
+    elif model is not None:
+        return Pipeline([
+            ("preprocessor", get_preprocessor(model)),
+            ("model", model())
+        ])
+    else:
+        raise ValueError("Provide either `model` class or `model_instance`.")
