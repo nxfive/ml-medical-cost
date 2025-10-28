@@ -86,7 +86,7 @@ def evaluate_target_transformers(
             ttr = TransformedTargetRegressor(
                 regressor=inner_pipeline, transformer=transformer
             )
-            local_param_grid = update_param_grid(local_param_grid, "regressor")
+            local_param_grid = update_param_grid(local_param_grid, "regressor") if local_param_grid else {}
         else:
             ttr = inner_pipeline
 
