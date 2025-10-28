@@ -209,3 +209,7 @@ __marimo__/
 # Mlflow
 mlruns/
 mlartifacts/
+
+# Project
+data/processed
+/models
