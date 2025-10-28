@@ -1,10 +1,17 @@
+import os
+from datetime import datetime
+from typing import Any, Sequence
+
+import joblib
 import numpy as np
 import pandas as pd
-from typing import Any, Sequence
-from sklearn.metrics import r2_score, mean_absolute_error, root_mean_squared_error
+import yaml
+from sklearn.metrics import (mean_absolute_error, r2_score,
+                             root_mean_squared_error)
 from sklearn.model_selection import KFold
 
 from src.models.settings import pipeline_config
+from src.utils.paths import MODELS_DIR
 
 
 def update_param_grid(param_grid: dict, step_name: str) -> dict:
@@ -126,3 +133,34 @@ def update_params_with_optuna(
             updated_params[key] = values
 
     return updated_params
+
+
+def save_model_with_metadata(
+    model: Any,
+    model_name: str,
+    metrics: dict[str, float],
+    params: dict[str, float | int],
+):
+    """
+    Save model and corresponding metadata to disk.
+    """
+    file_name = model_name.lower()
+    model_path = os.path.join(MODELS_DIR, f"{file_name}.pkl")
+    joblib.dump(model, model_path)
+
+    metadata = {
+        "model_name": model_name,
+        "version": "1.0",
+        "date_trained": datetime.today().strftime("%Y-%m-%d"),
+        "features_processed": {
+            "cat_features": pipeline_config.features.categorical,
+            "num_features": pipeline_config.features.numeric,
+            "bin_features": pipeline_config.features.binary,
+        },
+        "params": params or {},
+        "metrics": metrics
+    }
+
+    metadata_path = os.path.join(MODELS_DIR, "metadata", f"{file_name}.yml")
+    with open(metadata_path, "w") as f:
+        yaml.safe_dump(metadata, f)
