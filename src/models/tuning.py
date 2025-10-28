@@ -60,7 +60,7 @@ def perform_grid_search(
     ]
     folds_scores_mean = np.mean(folds_scores)
 
-    return gs, folds_scores, folds_scores_mean, y_train_pred, y_test_pred
+    return gs.best_estimator_, folds_scores, folds_scores_mean, y_train_pred, y_test_pred
 
 
 def evaluate_target_transformers(
