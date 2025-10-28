@@ -39,8 +39,6 @@ def split_data(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series, pd.DataFrame,
     integer columns to float, and saves the resulting datasets as Parquet files.
     """
     df = df.copy()
-    df["age"] = df["age"].astype(float)
-    df["children"] = df["children"].astype(float)
 
     X = df.drop(["charges"], axis=1)
     y = df["charges"]
