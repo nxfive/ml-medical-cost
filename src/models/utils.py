@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from typing import Sequence
+from typing import Any, Sequence
 from sklearn.metrics import r2_score, mean_absolute_error, root_mean_squared_error
 from sklearn.model_selection import KFold
 
@@ -108,3 +108,21 @@ def check_model_results(
         print(
             f"{model.__name__} may be overfitting. Consider adjusting hyperparameters."
         )
+
+
+def update_params_with_optuna(
+    model_params: dict[str, Any], optuna_params: dict[str, Any]
+) -> dict[str, Any]:
+    """
+    Updates model parameters with optimized values from Optuna results.
+    """
+    updated_params = {}
+    for key, values in model_params.items():
+        for param_name, best_value in optuna_params.items():
+            if key.endswith(param_name):
+                updated_params[key] = best_value
+                break
+        else:
+            updated_params[key] = values
+
+    return updated_params
