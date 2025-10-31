@@ -2,7 +2,8 @@ import os
 import yaml
 from typing import Any
 
-from src.utils.paths import MODEL_CONFIG
+from src.utils.paths import MODEL_CONFIG_FILE
+from src.models.config_defaults import MODEL_DEFAULT_CONFIG
 
 
 class FeaturesConfig:
@@ -21,39 +22,7 @@ class ModelConfig:
 
 class PipelineConfig:
     def __init__(self, yaml_path: str):
-        default_cfg = {
-            "cat_features": ["children", "region"],
-            "num_features": ["age", "bmi"],
-            "bin_features": ["sex", "smoker"],
-            "models": {
-                "LinearRegression": {
-                    "preprocess_num_features": True,
-                    "target_transformations": True,
-                    "params": {},
-                },
-                "KNeighborsRegressor": {
-                    "preprocess_num_features": True,
-                    "target_transformations": True,
-                    "params": {},
-                },
-                "DecisionTreeRegressor": {
-                    "preprocess_num_features": False,
-                    "target_transformations": False,
-                    "params": {},
-                },
-                "RandomForestRegressor": {
-                    "preprocess_num_features": False,
-                    "target_transformations": False,
-                    "params": {},
-                },
-            },
-            "cv": {"n_splits": 5, "shuffle": True, "random_state": 42},
-            "transformations": {
-                "log": {"params": {}},
-                "quantile": {"params": {}},
-                "none": {"params": {}},
-            },
-        }
+        default_cfg = MODEL_DEFAULT_CONFIG
         loaded_cfg = {}
         if os.path.exists(yaml_path):
             try:
@@ -95,4 +64,4 @@ class OptunaConfig:
         self.trials = cfg["optuna"].get("trials", 50)
 
 
-pipeline_config = PipelineConfig(MODEL_CONFIG)
+pipeline_config = PipelineConfig(MODEL_CONFIG_FILE)
