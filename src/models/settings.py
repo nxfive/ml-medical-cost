@@ -1,10 +1,13 @@
-import os
-import yaml
 from abc import ABC
+from dataclasses import dataclass, field
 from typing import Any
 
+import os
+import yaml
+
+from src.models.config_defaults import (MODEL_DEFAULT_CONFIG,
+                                        OPTUNA_DEFAULT_CONFIG)
 from src.utils.paths import MODEL_CONFIG_FILE
-from src.models.config_defaults import MODEL_DEFAULT_CONFIG, OPTUNA_DEFAULT_CONFIG
 
 
 class BaseConfig(ABC):
@@ -22,7 +25,6 @@ class BaseConfig(ABC):
                 merged[key] = base_value
         return merged
 
-
     def _load_yaml(self, yaml_path: str) -> dict:
         if not os.path.exists(yaml_path):
             return {}
@@ -33,28 +35,46 @@ class BaseConfig(ABC):
             return {}
 
 
-class FeaturesConfig:
-    def __init__(self, config: dict[str, Any]):
-        self.numeric = config.get("num_features", [])
-        self.categorical = config.get("cat_features", [])
-        self.binary = config.get("bin_features", [])
-
-
-class ModelConfig:
-    def __init__(self, config: dict[str, Any]):
-        self.preprocess_num_features = config.get("preprocess_num_features", True)
-        self.target_transformation = config.get("target_transformations", False)
-        self.params = config.get("params", {})
-
-
 class PipelineConfig(BaseConfig):
+
+    @dataclass(frozen=True)
+    class _FeaturesConfig:
+        numeric: list[str] = field(default_factory=list)
+        categorical: list[str] = field(default_factory=list)
+        binary: list[str] = field(default_factory=list)
+
+        @classmethod
+        def from_dict(cls, cfg: dict[str, Any]):
+            return cls(
+                numeric=cfg.get("num_features", []),
+                categorical=cfg.get("cat_features", []),
+                binary=cfg.get("bin_features", []),
+            )
+
+    @dataclass(frozen=True)
+    class _ModelConfig:
+        preprocess_num_features: bool = True
+        target_transformations: bool = False
+        params: dict[str, Any] = field(default_factory=dict)
+
+        @classmethod
+        def from_dict(cls, cfg: dict[str, Any]):
+            return cls(**cfg)
+
     def __init__(self, yaml_path: str):
         default_cfg = MODEL_DEFAULT_CONFIG
         loaded_cfg = self._load_yaml(yaml_path)
-        cfg = self._merge_with_defaults(default_cfg, loaded_cfg) if loaded_cfg else default_cfg
+        cfg = (
+            self._merge_with_defaults(default_cfg, loaded_cfg)
+            if loaded_cfg
+            else default_cfg
+        )
 
-        self.features = FeaturesConfig(cfg)
-        self.models = {name: ModelConfig(cfg["models"][name]) for name in cfg["models"]}
+        self.features = self._FeaturesConfig.from_dict(cfg)
+        self.models = {
+            name: self._ModelConfig.from_dict(cfg["models"][name])
+            for name in cfg["models"]
+        }
         self.cv = cfg["cv"]
         self.transformations = cfg["transformations"]
 
@@ -63,7 +83,11 @@ class OptunaConfig(BaseConfig):
     def __init__(self, yaml_path: str, model: type):
         default_cfg = OPTUNA_DEFAULT_CONFIG
         loaded_cfg = self._load_yaml(yaml_path)
-        cfg = self._merge_with_defaults(default_cfg, loaded_cfg) if loaded_cfg else default_cfg
+        cfg = (
+            self._merge_with_defaults(default_cfg, loaded_cfg)
+            if loaded_cfg
+            else default_cfg
+        )
 
         self.model = model
         self.params = cfg["models"][model.__name__]
