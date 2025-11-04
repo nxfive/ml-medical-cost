@@ -19,7 +19,11 @@ def update_param_grid(param_grid: dict, step_name: str) -> dict:
     Prefixes all keys in param_grid with 'step_name__' for pipeline compatibility.
     """
     param_grid = param_grid.copy()
-    return {f"{step_name}__{k}": v for k, v in param_grid.items()}
+    step_name = step_name.strip().strip("_")
+
+    if step_name:
+        return {f"{step_name}__{k}": v for k, v in param_grid.items()}
+    return param_grid
 
 
 def prepare_grid(model: type) -> dict:
