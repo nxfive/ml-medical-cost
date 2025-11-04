@@ -7,7 +7,7 @@ from sklearn.model_selection import KFold
 from src.models.models import create_model_pipeline
 from src.models.settings import OptunaConfig
 from src.models.utils import get_cv
-from src.utils.paths import OPTUNA_CONFIG
+from src.utils.paths import OPTUNA_CONFIG_FILE
 
 
 def objective(
@@ -86,7 +86,7 @@ def optimize_model(
     """
     Performs hyperparameter optimization for a given model using Optuna.
     """
-    optuna_config = OptunaConfig(OPTUNA_CONFIG, model)
+    optuna_config = OptunaConfig(OPTUNA_CONFIG_FILE, model)
 
     if not optuna_config.params:
         print(f"No Optuna parameters defined for {model.__name__}, skipping optimization.")
