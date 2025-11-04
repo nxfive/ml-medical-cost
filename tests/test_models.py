@@ -10,21 +10,8 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from src.models.models import create_model_pipeline, get_preprocessor
 
 
-def test_get_preprocessor_num_true(monkeypatch):
-
-    class FakeFeaturesConfig:
-        numeric = ["age", "bmi"]
-        binary = ["sex"]
-        categorical = ["region"]
-
-    class FakeModelConfig:
-        preprocess_num_features = True
-
-    class FakePipelineConfig:
-        features = FakeFeaturesConfig()
-        models = {"LinearRegression": FakeModelConfig()}
-
-    monkeypatch.setattr("src.models.models.pipeline_config", FakePipelineConfig())
+def test_get_preprocessor_num_true(monkeypatch, pipeline_config_lr):
+    monkeypatch.setattr("src.models.models.pipeline_config", pipeline_config_lr)
 
     preprocessor = get_preprocessor(LinearRegression)
     assert isinstance(preprocessor, ColumnTransformer)
@@ -38,20 +25,11 @@ def test_get_preprocessor_num_true(monkeypatch):
     assert isinstance(transformers["cat"], OneHotEncoder)
 
 
-def test_get_preprocessor_num_false(monkeypatch):
-    class FakeFeaturesConfig:
-        numeric = ["age", "bmi"]
-        binary = ["sex"]
-        categorical = ["region"]
-
-    class FakeModelConfig:
-        preprocess_num_features = False
-
-    class FakePipelineConfig:
-        features = FakeFeaturesConfig()
-        models = {"RandomForestRegressor": FakeModelConfig()}
-
-    monkeypatch.setattr("src.models.models.pipeline_config", FakePipelineConfig())
+def test_get_preprocessor_num_false(monkeypatch, pipeline_config_rf):
+    
+    pipline_config = pipeline_config_rf
+    
+    monkeypatch.setattr("src.models.models.pipeline_config", pipline_config)
     preprocessor = get_preprocessor(RandomForestRegressor)
 
     transformers = {
@@ -59,7 +37,7 @@ def test_get_preprocessor_num_false(monkeypatch):
     }
 
     assert "passthrough" in list(transformers.keys())
-    assert sorted(FakeFeaturesConfig.numeric + FakeFeaturesConfig.binary) == sorted(
+    assert sorted(pipline_config.features.numeric + pipline_config.features.binary) == sorted(
         transformers["passthrough"]
     )
 
