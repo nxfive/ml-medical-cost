@@ -180,7 +180,7 @@ def test_check_overfitting(train_r2, test_r2, threshold, expected, capsys):
         ),  # stable, not overfit
     ],
 )
-def test_check_model_results_not_stable_and_overfit(
+def test_check_model_results(
     metrics,
     folds_scores,
     model_name,
