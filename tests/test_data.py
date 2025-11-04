@@ -1,15 +1,9 @@
 from unittest import mock
 
 import pandas as pd
-import pytest
 
 from src.data.data import fetch_data, split_data
 from src.data.pipeline import data_pipeline
-
-
-@pytest.fixture
-def sample_df():
-    return pd.DataFrame({"age": [20, 30], "bmi": [18.5, 22.8]})
 
 
 def test_fetch_data_reads_exisiting_parquet(tmp_path, sample_df):
