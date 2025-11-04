@@ -26,12 +26,10 @@ class BaseConfig(ABC):
         return merged
 
     def _load_yaml(self, yaml_path: str) -> dict:
-        if not os.path.exists(yaml_path):
-            return {}
         try:
             with open(yaml_path, "r", encoding="utf-8") as f:
                 return yaml.safe_load(f) or {}
-        except (yaml.YAMLError, OSError):
+        except (FileNotFoundError, yaml.YAMLError, OSError):
             return {}
 
 
@@ -90,7 +88,7 @@ class OptunaConfig(BaseConfig):
         )
 
         self.model = model
-        self.params = cfg["models"][model.__name__]
+        self.params = cfg["models"].get(model.__name__, {})
         self.trials = cfg["optuna"]["trials"]
 
 
