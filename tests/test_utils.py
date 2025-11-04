@@ -8,10 +8,17 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import KFold
 
-from src.models.utils import (check_fold_stability, check_model_results,
-                              check_overfitting, get_cv, get_metrics,
-                              prepare_grid, save_model_with_metadata,
-                              update_param_grid, update_params_with_optuna)
+from src.models.utils import (
+    check_fold_stability,
+    check_model_results,
+    check_overfitting,
+    get_cv,
+    get_metrics,
+    prepare_grid,
+    save_model_with_metadata,
+    update_param_grid,
+    update_params_with_optuna,
+)
 
 
 @pytest.mark.parametrize(
@@ -216,21 +223,49 @@ def test_check_model_results(
             assert exp in captured.out
 
 
-def test_update_params_with_optuna():
-    model_params = {
-        "model__n_estimators": [25, 50, 100],
-        "model__max_depth": [3, 5, 10],
-    }
-
-    optuna_params = {"n_estimators": 47, "max_depth": 6}
-
+@pytest.mark.parametrize(
+    "model_params, optuna_params, expected",
+    [
+        (
+            {
+                "model__n_estimators": [25, 50, 100],
+                "model__max_depth": [3, 5, 10],
+            },
+            {"n_estimators": 47, "max_depth": 6},
+            {
+                "model__n_estimators": 47,
+                "model__max_depth": 6,
+            },
+        ),
+        (
+            {
+                "model__n_estimators": [25, 50, 100],
+                "model__max_depth": [3, 5, 10],
+            },
+            {"n_estimators": 47},
+            {
+                "model__n_estimators": 47,
+                "model__max_depth": 3,
+            },
+        ),
+        (
+            {
+                "model__n_estimators": [25, 50, 100],
+                "model__max_depth": 10,
+            },
+            {"n_estimators": 47},
+            {
+                "model__n_estimators": 47,
+                "model__max_depth": 10,
+            },
+        ),
+    ],
+)
+def test_update_params_with_optuna(model_params, optuna_params, expected):
     results = update_params_with_optuna(model_params, optuna_params)
 
     assert isinstance(results, dict)
-    assert results == {
-        "model__n_estimators": 47,
-        "model__max_depth": 6,
-    }
+    assert results == expected
 
 
 def test_save_model_with_metadata(tmp_path):
