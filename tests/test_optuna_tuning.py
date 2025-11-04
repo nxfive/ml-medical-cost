@@ -1,11 +1,10 @@
 from unittest import mock
 
-import pandas as pd
 import pytest
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 
-from src.models.optuna_tuning import objective
+from src.models.optuna_tuning import objective, optimize_model
 
 
 @pytest.mark.parametrize(
@@ -98,3 +97,49 @@ def test_objective_pruning(monkeypatch, train_data, fake_trial_prune, fake_cv):
             optuna_params={"fit_intercept": [True, False]},
             cv=fake_cv,
         )
+
+
+def test_optimize_model_no_params(capsys, train_data):
+    model = mock.Mock(__name__="FakeModel")
+    X_train, y_train = train_data
+
+    optuna_config_instance = mock.Mock()
+    optuna_config_instance.params = {}
+
+    with mock.patch(
+        "src.models.optuna_tuning.OptunaConfig", return_value=optuna_config_instance
+    ):
+        results = optimize_model(model, X_train, y_train)
+
+    captured = capsys.readouterr()
+
+    assert results is None
+    assert model.__name__ in captured.out
+    assert "skipping optimization" in captured.out
+
+
+def test_optimize_model_with_params(capsys, train_data):
+    X_train, y_train = train_data
+
+    model = mock.Mock()
+
+    mock_optuna_config = mock.Mock()
+    mock_optuna_config.params = {"n_estimators": {"min": 50, "max": 150, "step": 10}}
+    mock_optuna_config.trials = 5
+
+    fake_study = mock.Mock()
+    fake_study.best_params = {"n_estimators": 50}
+
+    with (
+        mock.patch(
+            "src.models.optuna_tuning.OptunaConfig", return_value=mock_optuna_config
+        ),
+        mock.patch("optuna.create_study", return_value=fake_study),
+    ):
+        results = optimize_model(model, X_train, y_train)
+
+    captured = capsys.readouterr()
+    assert isinstance(results, tuple)
+    study, best_params = results
+    assert study is fake_study
+    assert "skipping optimization" not in captured.out
