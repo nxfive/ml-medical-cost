@@ -14,6 +14,40 @@ def train_data():
     return X_train, y_train
 
 
+@pytest.fixture
+def pipeline_config_lr():
+    class FakeFeaturesConfig:
+        numeric = ["age", "bmi"]
+        binary = ["sex"]
+        categorical = ["region"]
+
+    class FakeModelConfig:
+        preprocess_num_features = True
+
+    class FakePipelineConfig:
+        features = FakeFeaturesConfig()
+        models = {"LinearRegression": FakeModelConfig()}
+
+    return FakePipelineConfig()
+
+
+@pytest.fixture
+def pipeline_config_rf():
+    class FakeFeaturesConfig:
+        numeric = ["age", "bmi"]
+        binary = ["sex"]
+        categorical = ["region"]
+
+    class FakeModelConfig:
+        preprocess_num_features = False
+
+    class FakePipelineConfig:
+        features = FakeFeaturesConfig()
+        models = {"RandomForestRegressor": FakeModelConfig()}
+
+    return FakePipelineConfig()
+
+
 class FakeTrial:
     def __init__(self, prune=False):
         self.reported = []
