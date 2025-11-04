@@ -134,7 +134,18 @@ def update_params_with_optuna(
                 updated_params[key] = best_value
                 break
         else:
-            updated_params[key] = values
+            if isinstance(values, list):
+                print(
+                    f"Parameter '{key}' not found in Optuna results. "
+                    f"Using first value from config: {values[0]!r}"
+                )
+                updated_params[key] = values[0]
+            else:
+                print(
+                    f"Parameter '{key}' not found in Optuna results. "
+                    f"Using config value: {values!r}"
+                )
+                updated_params[key] = values
 
     return updated_params
 
