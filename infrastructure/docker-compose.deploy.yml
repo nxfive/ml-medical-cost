@@ -1,0 +1,107 @@
+services:
+  backend:
+    image: ghcr.io/nxfive/ml-medical-cost/backend:latest
+  environment:
+    DATABASE_URL_PROD: ${DATABASE_URL_PROD}
+  networks:
+    - traefik-net
+  
+  frontend:
+    image: ghcr.io/nxfive/ml-medical-cost/frontend:latest
+    environment:
+      BENTO_HOST: backend
+      BENTO_PORT: ${BACKEND_PORT}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`ml-medical-cost.nxfive.pl`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.frontend-ratelimit.ratelimit.average=200"
+      - "traefik.http.middlewares.frontend-ratelimit.ratelimit.burst=100"
+      - "traefik.http.routers.fronted.middlewares=frontend-ratelimit"
+      - "traefik.http.services.frontend.loadbalancer.server.port=8501"
+    networks:
+      - traefik-net
+
+  postgres-backend:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${BACKEND_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${BACKEND_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${BACKEND_POSTGRES_DB}
+    volumes:
+      - backend_postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal-net
+    restart: unless-stopped
+
+  postgres-mlflow:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${MLFLOW_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${MLFLOW_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${MLFLOW_POSTGRES_DB}
+    volumes:
+      - mlflow_postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal-net
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:9.8
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-net"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.nxfive.pl`)"
+      - "traefik.http.routers.pgadmin.tls=true"
+      - "traefik.http.routers.pgadmin.middlewares=pgadmin-ipwhitelist@docker"
+      - "traefik.http.middlewares.pgadmin-ipwhitelist.ipwhitelist.sourcerange=10.200.200.0/24"
+    networks:
+      - traefik-net
+      - internal-net
+    restart: unless-stopped
+
+  mlflow:
+    image: ghcr.io/nxfive/ml-medical-cost/mlflow:latest
+    volumes:
+      - mlflow_artifacts:/mlflow/artifacts
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-net"
+      - "traefik.http.routers.mlflow.rule=Host(`mlflow.nxfive.pl`)"
+      - "traefik.http.routers.mlflow.tls=true"
+      - "traefik.http.routers.mlflow.service=mlflow"
+      - "traefik.http.services.mlflow.loadbalancer.server.port=5000"
+      - "traefik.http.routers.mlflow.middlewares=mlflow-ipwhitelist@docker"
+      - "traefik.http.middlewares.mlflow-ipwhitelist.ipwhitelist.sourcerange=10.200.200.0/24"
+    environment:
+      POSTGRES_SERVICE: postgres-mlflow
+      POSTGRES_USER: ${MLFLOW_POSTGRES_USER}
+      POSTGRES_PASS: ${MLFLOW_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${MLFLOW_POSTGRES_DB}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      MLFLOW_HOST: ${MLFLOW_HOST}
+    networks:
+      - traefik-net
+      - internal-net
+    restart: unless-stopped
+
+
+volumes:
+  backend_postgres_data:
+  mlflow_postgres_data:
+  mlflow_artifacts:
+  pgadmin_data:
+
+networks:
+  traefik-net:
+    external: true
+  internal-net:
+    external: true
+
+  
