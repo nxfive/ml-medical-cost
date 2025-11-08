@@ -12,13 +12,12 @@ def setup_mlflow():
     """
     Configures MLflow tracking for CI/CD or local runs.
     """
-    token = os.getenv("MLFLOW_TRACKING_TOKEN")
     remote_uri = os.getenv("MLFLOW_TRACKING_URI")
 
     commit_hash = os.getenv("GITHUB_SHA", "")[:7]
     timestamp = datetime.now().strftime("%Y-%m-%d-%H%M")
 
-    if token and remote_uri:
+    if remote_uri:
         mlflow.set_tracking_uri(remote_uri)
         experiment_name = f"ci-build-{commit_hash or timestamp}"
     else:
