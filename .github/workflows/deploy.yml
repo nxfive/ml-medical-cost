@@ -1,0 +1,153 @@
+name: CI/CD Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_BACKEND: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/backend
+  IMAGE_FRONTEND: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/frontend
+  TAG: ${{ github.run_id }}
+
+jobs:
+  create_env:
+    name: Create .env File
+    runs-on: self-hosted
+    outputs:
+      env_path: ${{ steps.create_env.outputs.env_path }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Create .env
+        id: create_env
+        run: |
+          APP_DIR=~/ml-medical-cost
+          mkdir -p $APP_DIR
+          cat <<EOF > $APP_DIR/.env
+          BACKEND_PORT=${{ secrets.BACKEND_PORT }}
+          BACKEND_POSTGRES_DB=${{ secrets.BACKEND_POSTGRES_DB }}
+          BACKEND_POSTGRES_PASSWORD=${{ secrets.BACKEND_POSTGRES_PASSWORD }}
+          BACKEND_POSTGRES_USER=${{ secrets.BACKEND_POSTGRES_USER }}
+          DATABASE_URL_PROD=${{ secrets.DATABASE_URL_PROD }}
+          MLFLOW_HOST=${{ secrets.MLFLOW_HOST }}
+          MLFLOW_POSTGRES_DB=${{ secrets.MLFLOW_POSTGRES_DB }}
+          MLFLOW_POSTGRES_PASSWORD=${{ secrets.MLFLOW_POSTGRES_PASSWORD }}
+          MLFLOW_POSTGRES_USER=${{ secrets.MLFLOW_POSTGRES_USER }}
+          MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }}
+          PGADMIN_EMAIL=${{ secrets.PGADMIN_EMAIL }}
+          PGADMIN_PASSWORD=${{ secrets.PGADMIN_PASSWORD }}
+          POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
+          EOF
+
+  setup:
+    name: Setup Services
+    runs-on: self-hosted  
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Copy docker-compose
+        run: cp infrastructure/docker-compose.services.yml ~/ml-medical-cost/docker-compose.services.yml
+
+      - name: Run docker services
+        run: docker compose --env-file ~/ml-medical-cost/.env -f ~/ml-medical-cost/docker-compose.services.yml up -d --build 
+
+  test:
+    name: Run Unit Tests
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Install & Sync Dependencies
+        run: pip install --no-cache-dir uv && uv sync
+      
+      - name: Run Tests
+        run: uv run pytest -v
+
+  train:
+    name: Train & Choose the Best Model
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Install & Sync Dependencies
+        run: pip install --no-cache-dir uv && uv sync
+      
+      - name: Run Training
+        run: |
+          MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }}
+          GITHUB_SHA=${{ github.sha }}
+          uv run python -m src.main
+
+  build_and_push:
+    name: Build & Push Docker Images
+    runs-on: self-hosted
+    needs: test
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+
+      - name: Build & Push Backend
+        run: |
+          docker build -t $IMAGE_BACKEND:$TAG -f infrastructure/Dockerfile.backend .
+          docker push $IMAGE_BACKEND:$TAG
+          docker tag $IMAGE_BACKEND:$TAG $IMAGE_BACKEND:latest
+          docker push $IMAGE_BACKEND:latest
+
+      - name: Build & Push Frontend
+        run: |
+          docker build -t $IMAGE_FRONTEND:$TAG -f infrastructure/Dockerfile.frontend .
+          docker push $IMAGE_FRONTEND:$TAG
+          docker tag $IMAGE_FRONTEND:$TAG $IMAGE_FRONTEND:latest
+          docker push $IMAGE_FRONTEND:latest
+  
+  migrate_db:
+    name: Run Alembic Migrations
+    runs-on: self-hosted
+    needs: build_and_push  
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Install & Sync Dependencies
+        run: pip install --no-cache-dir uv && uv sync
+
+      - name: Run Alembic migrations
+        env:
+          ENV: prod
+          DATABASE_URL_PROD: ${{ secrets.DATABASE_URL_PROD }}
+        run: uv run alembic upgrade head
+  
+  deploy:
+    name: Deploy to VPS
+    runs-on: self-hosted
+    needs: build_and_push
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Copy deploy files
+        run: cp infrastructure/docker-compose.deploy.yml ~/ml-medical-cost/
+
+      - name: Deploy App
+        run: |
+          docker logout ghcr.io
+          echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+          docker compose -f ~/ml-medical-cost/docker-compose.deploy.yml pull
+          docker compose --env-file ~/ml-medical-cost/.env -f ~/ml-medical-cost/docker-compose.deploy.yml up -d --build --force-recreate
