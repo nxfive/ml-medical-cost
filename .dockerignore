@@ -1,0 +1,66 @@
+# System / OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg
+*.pytest_cache/
+
+# Virtual environments
+.venv/
+env/
+venv/
+*.env
+
+# Local configuration
+.python-version
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+logs/
+*.tmp
+
+# Dirs
+data/
+docs/
+models/
+notebooks/
+reports/
+config/
+tests/
+
+# Build artifacts
+build/
+dist/
+*.tar.gz
+*.whl
+
+# Test results
+coverage/
+.coverage
+htmlcov/
+
+# Docker
+Dockerfile.*.backup
+.dockerignore.bak
+
+# Alembic
+alembic/
+alembic.ini
+
+# dvc
+.dvc
+models.dvc
+
+# mlflow
+mlruns/
+mlartifacts/
