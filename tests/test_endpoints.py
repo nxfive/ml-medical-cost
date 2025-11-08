@@ -1,4 +1,3 @@
-from typing import List
 from unittest import mock
 
 import numpy as np
@@ -7,12 +6,11 @@ import pytest
 from fastapi import FastAPI
 from starlette.testclient import TestClient
 
-from services.backend.service import (MedicalCostFeatures,
-                                      MedicalRegressorService)
+from services.backend.service import MedicalCostFeatures, MedicalRegressorService
 
 
 @pytest.fixture
-def client():
+def client(fake_db):
     fake_model = mock.Mock()
     fake_model.predict.return_value = np.array([1234.56])
 
@@ -21,8 +19,12 @@ def client():
         columns=["age", "sex", "bmi", "children", "smoker", "region"],
     )
 
-    with mock.patch(
-        "services.backend.service.convert_features_type", return_value=converted_df
+    with (
+        mock.patch(
+            "services.backend.service.convert_features_type",
+            return_value=converted_df,
+        ),
+        mock.patch("services.backend.service.get_db", return_value=iter([fake_db])),
     ):
         service = MedicalRegressorService()
         service.model = fake_model
@@ -52,7 +54,7 @@ def test_predict_endpoint(client):
 
 
 @pytest.fixture
-def client_many():
+def client_many(fake_db):
     fake_model = mock.Mock()
     fake_model.predict.return_value = np.array([1000.0, 2000.0])
 
@@ -64,8 +66,11 @@ def client_many():
         columns=["age", "sex", "bmi", "children", "smoker", "region"],
     )
 
-    with mock.patch(
-        "services.backend.service.convert_features_type", return_value=converted_df
+    with (
+        mock.patch(
+            "services.backend.service.convert_features_type", return_value=converted_df
+        ),
+        mock.patch("services.backend.service.get_db", return_value=iter([fake_db])),
     ):
         service = MedicalRegressorService()
         service.model = fake_model
@@ -73,7 +78,7 @@ def client_many():
         app = FastAPI()
 
         @app.post("/predict_multiple")
-        def predict_multiple(features_list: List[MedicalCostFeatures]):
+        def predict_multiple(features_list: list[MedicalCostFeatures]):
             return service.predict_multiple(features_list)
 
         return TestClient(app)
