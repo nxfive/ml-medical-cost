@@ -1,5 +1,8 @@
-import pytest
+from unittest import mock
+
 import pandas as pd
+import pytest
+from sqlalchemy.orm import Session
 
 
 @pytest.fixture
@@ -52,16 +55,27 @@ class FakeTrial:
     def __init__(self, prune=False):
         self.reported = []
         self._prune = prune
-    def suggest_categorical(self, name, choices): return choices[0]
-    def suggest_int(self, name, min, max, step=1): return min
-    def suggest_float(self, name, min, max, step=1.0): return min
-    def report(self, value, step): self.reported.append((value, step))
-    def should_prune(self): return self._prune
+
+    def suggest_categorical(self, name, choices):
+        return choices[0]
+
+    def suggest_int(self, name, min, max, step=1):
+        return min
+
+    def suggest_float(self, name, min, max, step=1.0):
+        return min
+
+    def report(self, value, step):
+        self.reported.append((value, step))
+
+    def should_prune(self):
+        return self._prune
 
 
 @pytest.fixture
 def fake_trial():
     return FakeTrial()
+
 
 @pytest.fixture
 def fake_trial_prune():
@@ -70,8 +84,15 @@ def fake_trial_prune():
 
 class FakeCV:
     def split(self, X, y):
-        return [(slice(0,2), slice(2,4))]
+        return [(slice(0, 2), slice(2, 4))]
+
 
 @pytest.fixture
 def fake_cv():
-    return FakeCV()  
+    return FakeCV()
+
+
+@pytest.fixture
+def fake_db():
+    db = mock.Mock(spec=Session)
+    yield db
