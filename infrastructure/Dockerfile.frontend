@@ -1,0 +1,19 @@
+FROM python:3.12-slim
+
+WORKDIR /frontend
+
+ENV PYTHONUNBUFFERED=1
+
+COPY pyproject.toml uv.lock ./
+COPY services/frontend/ ./client/
+COPY scripts/front-entrypoint.sh ./entrypoint.sh
+
+
+RUN pip install --no-cache-dir uv && \
+    uv sync --group client --frozen --no-dev 
+
+ENV VIRTUAL_ENV="/frontend/.venv"
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV ENV="prod"
+
+ENTRYPOINT ["/bin/bash", "/frontend/entrypoint.sh"]
