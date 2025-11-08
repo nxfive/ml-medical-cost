@@ -1,0 +1,95 @@
+cat_features:
+  - children
+  - region
+
+num_features:
+  - age
+  - bmi
+
+bin_features:
+  - sex
+  - smoker
+
+models:
+  LinearRegression:
+    preprocess_num_features: True
+    target_transformations: True
+    params: {}
+
+  KNeighborsRegressor:
+    preprocess_num_features: True
+    target_transformations: True
+    params:
+      n_neighbors: 
+        - 3
+        - 5
+        - 7
+      weights: 
+        - uniform
+        - distance
+      leaf_size:
+        - 20
+        - 30
+        - 40
+      p:
+        - 1
+        - 2
+
+  DecisionTreeRegressor:
+    preprocess_num_features: False
+    target_transformations: False
+    params:
+      max_depth:
+        - 2
+        - 5
+        - 7
+      min_samples_split:
+        - 2
+        - 5
+        - 10
+      min_samples_leaf:
+        - 2
+        - 5
+        - 10
+
+  RandomForestRegressor:
+    preprocess_num_features: False
+    target_transformations: False
+    params:
+      n_estimators:
+        - 25
+        - 50
+        - 100
+      max_depth:
+        - 3
+        - 5
+        - 10
+      min_samples_split:
+        - 2
+        - 5
+        - 10
+      min_samples_leaf:
+        - 2
+        - 5
+        - 10
+
+
+cv:
+  n_splits: 5
+  shuffle: True
+  random_state: 42
+
+
+transformations:
+  log: 
+    params: {}
+    
+  quantile:
+    params:
+      n_quantiles:
+        - 100
+        - 150
+        - 200
+      
+  none:
+    params: {}
