@@ -46,7 +46,7 @@ def run_pipeline(
                 pipeline, X_train=X_train, X_test=X_test, y_train=y_train
             )
 
-    if pipeline_config.models[model.__name__].target_transformation:
+    if pipeline_config.models[model.__name__].target_transformations:
         for (
             pipeline,
             local_param_grid,
