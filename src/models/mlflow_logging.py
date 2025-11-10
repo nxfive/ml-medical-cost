@@ -6,6 +6,7 @@ import mlflow
 import optuna
 import pandas as pd
 from sklearn.base import BaseEstimator
+import uuid
 
 
 def setup_mlflow():
@@ -42,8 +43,9 @@ def log_model(
     Logs model parameters, metrics, and artifacts to MLflow.
     If an Optuna study is provided, registers the model to the MLflow Model Registry.
     """
-    with mlflow.start_run(run_name=model.__name__, nested=True):
-
+    uuid_id = uuid.uuid4().hex[:6]
+    run_name = f"{model.__name__}-{uuid_id}"
+    with mlflow.start_run(run_name=run_name) as run:
         if param_grid:
             for param, value in param_grid.items():
                 mlflow.log_param(param, value)
@@ -51,14 +53,17 @@ def log_model(
         if transformer_name:
             mlflow.log_param("transformer", transformer_name)
 
+        i=1
         for name, value in metrics.items():
-            mlflow.log_metric(name, value)
+            mlflow.log_metric(name, value, step=i)
+            i+=1
 
         if folds_scores is not None and folds_scores_mean is not None:
-            for i, score in enumerate(folds_scores):
-                mlflow.log_metric(f"fold_{i+1}_r2", score)
+            for s, score in enumerate(folds_scores):
+                mlflow.log_metric(f"fold_{s+1}_r2", score, step=i)
+                i+=1
 
-            mlflow.log_metric("folds_r2_mean", folds_scores_mean)
+            mlflow.log_metric("folds_r2_mean", folds_scores_mean, step=i)
 
         example_input = X_train.iloc[:5]
         example_output = estimator.predict(example_input)
@@ -66,17 +71,14 @@ def log_model(
         signature = mlflow.models.infer_signature(example_input, example_output)
 
         mlflow.sklearn.log_model(
-            estimator,
-            name=f"{model.__name__}",
-            signature=signature,
-            input_example=example_input,
-        )
-
-        current_file = os.path.abspath(__file__)
-        mlflow.log_artifact(current_file)
+                estimator,
+                name=model.__name__,
+                signature=signature,
+                input_example=example_input,
+            )
 
         if study:
             mlflow.register_model(
-                f"runs:/{mlflow.active_run().info.run_id}/{model.__name__}",
-                "MedicalRegressor",
+                f"mlflow-artifacts:/{run.info.experiment_id}/{run.info.run_id}/artifacts",
+                name=f"medicalregressor-{uuid_id}",
             )
