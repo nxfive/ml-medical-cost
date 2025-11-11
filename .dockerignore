@@ -53,10 +53,6 @@ htmlcov/
 Dockerfile.*.backup
 .dockerignore.bak
 
-# Alembic
-alembic/
-alembic.ini
-
 # dvc
 .dvc
 models.dvc
