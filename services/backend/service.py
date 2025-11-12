@@ -4,9 +4,10 @@ from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from database.db import get_db
-from database.models import MedicalPrediction
-from src.features.features import convert_features_type
+with bentoml.importing():
+    from database.db import get_db
+    from database.models import MedicalPrediction
+    from src.features.features import convert_features_type
 
 
 class MedicalCostFeatures(BaseModel):
