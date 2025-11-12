@@ -9,7 +9,7 @@ from sklearn.base import BaseEstimator
 import uuid
 
 
-def setup_mlflow():
+def setup_mlflow(exp=True):
     """
     Configures MLflow tracking for CI/CD or local runs.
     """
@@ -20,6 +20,7 @@ def setup_mlflow():
 
     if remote_uri:
         mlflow.set_tracking_uri(remote_uri)
+        mlflow.set_registry_uri(remote_uri)
         experiment_name = f"ci-build-{commit_hash or timestamp}"
     else:
         mlflow.set_tracking_uri("http://localhost:5000")
@@ -79,6 +80,6 @@ def log_model(
 
         if study:
             mlflow.register_model(
-                f"mlflow-artifacts:/{run.info.experiment_id}/{run.info.run_id}/artifacts",
-                name=f"medicalregressor-{uuid_id}",
+                f"runs:/{mlflow.active_run().info.run_id}/{model.__name__}",
+                name="MedicalRegressor",
             )
