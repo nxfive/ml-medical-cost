@@ -45,6 +45,9 @@ COPY --from=builder /backend/src ./src
 COPY --from=builder /backend/alembic.ini ./ 
 COPY --from=builder /backend/entrypoint.sh ./
 
+RUN ./.venv/bin/python -m ensurepip && \
+    ./.venv/bin/python -m pip install --upgrade pip
+
 ENV VIRTUAL_ENV="/backend/.venv"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV ENV="prod"
