@@ -1,0 +1,8 @@
+# example configuration
+
+listen_addresses = '*'
+port = 5432
+ssl = on
+ssl_cert_file = '/path/to/server.crt'
+ssl_key_file = '/path/to/server.key'
+ssl_ca_file = '/path/to/ca.crt'
