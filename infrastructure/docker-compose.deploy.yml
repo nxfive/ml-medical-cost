@@ -1,12 +1,16 @@
 services:
   backend:
     image: ghcr.io/nxfive/ml-medical-cost/backend:latest
-  environment:
-    DATABASE_URL_PROD: ${DATABASE_URL_PROD}
-    MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI}
-  networks:
-    - traefik-net
-  
+    environment:
+      DATABASE_URL_PROD: ${DATABASE_URL_PROD}
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_PROD}
+      DB_HOST: ${BACKEND_POSTGRES_HOST}
+      DB_PORT: ${POSTGRES_PORT}
+    volumes:
+      - pg-certs-backend-client:/certs:ro
+    networks:
+      - internal-net
+
   frontend:
     image: ghcr.io/nxfive/ml-medical-cost/frontend:latest
     environment:
@@ -14,17 +18,26 @@ services:
       BENTO_PORT: ${BACKEND_PORT}
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-net"
       - "traefik.http.routers.frontend.rule=Host(`ml-medical-cost.nxfive.pl`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=myresolver"
       - "traefik.http.middlewares.frontend-ratelimit.ratelimit.average=200"
       - "traefik.http.middlewares.frontend-ratelimit.ratelimit.burst=100"
-      - "traefik.http.routers.fronted.middlewares=frontend-ratelimit"
+      - "traefik.http.routers.frontend.middlewares=frontend-ratelimit"
       - "traefik.http.services.frontend.loadbalancer.server.port=8501"
     networks:
       - traefik-net
+      - internal-net
 
+
+volumes:
+  pg-certs-backend-client:
+    external: true
+    name: config_pg-certs-backend-client
 
 networks:
   traefik-net:
+    external: true
+  internal-net:
     external: true
