@@ -28,14 +28,17 @@ services:
     restart: unless-stopped
     
   pgadmin:
-    image: dpage/pgadmin4:9.8
+    build:
+      context: .
+      dockerfile: pgadmin/Dockerfile
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_EMAIL_PATH: ${PGADMIN_EMAIL_PATH}
     volumes:
       - pgadmin_data:/var/lib/pgadmin
-      - pg-certs-backend-pgadmin:${CA_MOUNT}/backend-certs
-      - pg-certs-mlflow-pgadmin:${CA_MOUNT}/mlflow-certs
+      - pg-certs-backend-pgadmin:/var/lib/pgadmin/storage/${PGADMIN_EMAIL_PATH}/certs/backend
+      - pg-certs-mlflow-pgadmin:/var/lib/pgadmin/storage/${PGADMIN_EMAIL_PATH}/certs/mlflow
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-net"
