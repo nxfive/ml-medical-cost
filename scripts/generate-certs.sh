@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eu
 
 # Generate certs for each service
 SERVICE="${SERVICE:-postgres}"   
@@ -12,7 +12,7 @@ if [ ! -f "$CA_KEY" ]; then
   exit 2
 fi
 
-mkdir -p "$OUT_DIR/server" "$OUT_DIR/clients"
+mkdir -p "$OUT_DIR/server" "$OUT_DIR/client"
 cd "$OUT_DIR"
 
 if [ ! -f "ca.crt" ]; then
@@ -31,24 +31,16 @@ chmod 600 server/server.key
 chmod 644 server/server.crt
 chown -R 999:999 server    # postgres user
 
+echo "Generating key/cert for $SERVICE client..."
 
-CLIENTS=("client-${SERVICE}" "client-pgadmin")
+openssl genrsa -out "client/client.key" 2048
+openssl req -new -key "client/client.key" -out "client/client.csr" -subj "/CN=${SERVICE}-user"
+openssl x509 -req -in "client/client.csr" -CA ca.crt -CAkey "$CA_KEY" -CAcreateserial -out "client/client.crt" -days "$DAYS" -sha256
 
-for c in "${CLIENTS[@]}"; do
-  echo "Generating key/cert for ${c}..."
-  
-  mkdir -p "clients/${c}"
-  
-  openssl genrsa -out "clients/${c}/client.key" 2048
-  openssl req -new -key "clients/${c}/client.key" -out "clients/${c}/client.csr" -subj "/CN=${c#client-}-user"
-  openssl x509 -req -in "clients/${c}/client.csr" -CA ca.crt -CAkey "$CA_KEY" -CAcreateserial -out "clients/${c}/client.crt" -days "$DAYS" -sha256
-  
-  rm -f "clients/${c}/client.csr"
-  
-  chmod 600 "clients/${c}/client.key"
-  chmod 644 "clients/${c}/client.crt"
-  
-done
+rm -f "client/client.csr"
+
+chmod 600 "client/client.key"
+chmod 644 "client/client.crt"
 
 echo "Done. Files in $OUT_DIR:"
 ls -R "$OUT_DIR"
@@ -63,15 +55,17 @@ cp -a "$SRC/ca.crt" "$DST_SERVER/"
 
 echo "Copying client-$SERVICE cert to $DST_CLIENT"
 mkdir -p "$DST_CLIENT"
-cp -a "$SRC/clients/client-$SERVICE/"* "$DST_CLIENT/" 
+cp -a "$SRC/client/"* "$DST_CLIENT/" 
 cp -a "$SRC/ca.crt" "$DST_CLIENT/"
 
 echo "Copying client-pgadmin cert to $DST_PGADMIN"
 mkdir -p "$DST_PGADMIN"
-cp -a "$SRC/clients/client-pgadmin/"* "$DST_PGADMIN/" 
+cp -a "$SRC/client/"* "$DST_PGADMIN/" 
 cp -a "$SRC/ca.crt" "$DST_PGADMIN/"
+
+chown -R 5050:5050 "$DST_PGADMIN/"
 
 echo "Done. Listing:"
 ls -R "$DST_SERVER" 
 ls -R "$DST_CLIENT" 
-ls -R "$DST_PGADMIN" 
+ls -R "$DST_PGADMIN"
