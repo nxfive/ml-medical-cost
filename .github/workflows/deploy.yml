@@ -1,0 +1,210 @@
+name: CI/CD Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_BACKEND: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/backend
+  IMAGE_FRONTEND: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/frontend
+  IMAGE_MLFLOW: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/mlflow
+  TAG: ${{ github.run_id }}
+
+jobs:
+  create_env:
+    name: Create .env File
+    runs-on: self-hosted
+    needs: build_and_push_mlflow
+    outputs:
+      env_path: ${{ steps.create_env.outputs.env_path }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Create .env
+        id: create_env
+        run: |
+          ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            APP_DIR=~/ml-medical-cost
+            mkdir -p $APP_DIR
+            cat <<EOT > $APP_DIR/.env
+            BACKEND_PORT=${{ secrets.BACKEND_PORT }}
+            BACKEND_POSTGRES_DB=${{ secrets.BACKEND_POSTGRES_DB }}
+            BACKEND_POSTGRES_HOST=${{ secrets.BACKEND_POSTGRES_HOST }}
+            BACKEND_POSTGRES_PASSWORD=${{ secrets.BACKEND_POSTGRES_PASSWORD }}
+            BACKEND_POSTGRES_USER=${{ secrets.BACKEND_POSTGRES_USER }}
+            CA_BACKEND=${{ secrets.CA_BACKEND }}
+            CA_MLFLOW=${{ secrets.CA_MLFLOW }}
+            CA_MOUNT=${{ secrets.CA_MOUNT }}
+            DATABASE_URL_PROD=${{ secrets.DATABASE_URL_PROD }}
+            MLFLOW_HOST=${{ secrets.MLFLOW_HOST }}
+            MLFLOW_POSTGRES_DB=${{ secrets.MLFLOW_POSTGRES_DB }}
+            MLFLOW_POSTGRES_PASSWORD=${{ secrets.MLFLOW_POSTGRES_PASSWORD }}
+            MLFLOW_POSTGRES_USER=${{ secrets.MLFLOW_POSTGRES_USER }}
+            MLFLOW_TRACKING_PROD=${{ secrets.MLFLOW_TRACKING_PROD }}
+            MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }}
+            PG_MOUNT=${{ secrets.PG_MOUNT }}
+            PG_SSL_ADDRESS=${{ secrets.PG_SSL_ADDRESS }}
+            PGADMIN_EMAIL=${{ secrets.PGADMIN_EMAIL }}
+            PGADMIN_PASSWORD=${{ secrets.PGADMIN_PASSWORD }}
+            PGADMIN_EMAIL_PATH=$(echo "{{ secrets.PGADMIN_EMAIL }}" | tr '@' '_')
+            POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
+            EOT
+          EOF
+  setup:
+    name: Setup Services
+    runs-on: self-hosted
+    needs: create_env
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create config structure on VPS
+        run: |
+          ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            mkdir -p ~/ml-medical-cost/mlflow_artifacts
+            mkdir -p ~/ml-medical-cost/config/scripts
+            mkdir -p ~/ml-medical-cost/config/cert-generator
+            mkdir -p ~/ml-medical-cost/config/postgres-config
+            mkdir -p ~/ml-medical-cost/pgadmin
+          "
+      - name: Copy config files
+        run: |
+          scp -i ~/.ssh/id_rsa_ci -P ${{ secrets.SSH_PORT }} -r infrastructure/docker/cert-generator/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/ml-medical-cost/config/cert-generator/
+          scp -i ~/.ssh/id_rsa_ci -P ${{ secrets.SSH_PORT }} -r infrastructure/docker/postgres-config/* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/ml-medical-cost/config/postgres-config/
+
+          scp -i ~/.ssh/id_rsa_ci -P ${{ secrets.SSH_PORT }} infrastructure/docker-compose/tls.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/ml-medical-cost/config/tls.yml
+          scp -i ~/.ssh/id_rsa_ci -P ${{ secrets.SSH_PORT }} infrastructure/docker-compose/pg-config.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/ml-medical-cost/config/pg-config.yml
+
+          scp -i ~/.ssh/id_rsa_ci -P ${{ secrets.SSH_PORT }} scripts/generate-certs.sh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/ml-medical-cost/config/scripts/generate-certs.sh
+          scp -i ~/.ssh/id_rsa_ci -P ${{ secrets.SSH_PORT }} scripts/tls-postgres-config.sh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/ml-medical-cost/config/scripts/tls-postgres-config.sh
+      
+          scp -i ~/.ssh/id_rsa_ci -P ${{ secrets.SSH_PORT }} infrastructure/docker/pgadmin/Dockerfile ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/ml-medical-cost/pgadmin/Dockerfile
+          scp -i ~/.ssh/id_rsa_ci -P ${{ secrets.SSH_PORT }} scripts/pgadmin-entrypoint.sh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/ml-medical-cost/pgadmin/entrypoint.sh
+
+      - name: Run config containers
+        run: |
+          ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER}}@${{ secrets.VPS_HOST }} "
+            docker compose --env-file ~/ml-medical-cost/.env -f ~/ml-medical-cost/config/tls.yml up -d --build --force-recreate
+          "
+
+      - name: Copy services files
+        run: |
+          scp -i ~/.ssh/id_rsa_ci -P ${{ secrets.SSH_PORT }} infrastructure/docker-compose/data.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/ml-medical-cost/data.yml
+        
+      - name: Run service containers
+        run: |
+          ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+            docker compose -f ~/ml-medical-cost/data.yml pull
+            docker compose --env-file ~/ml-medical-cost/.env -f ~/ml-medical-cost/data.yml up -d --build --force-recreate
+            docker logout ghcr.io
+          "
+      - name: Run ssl/tls postgres config setup
+        run: |
+          ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            docker compose --env-file ~/ml-medical-cost/.env -f ~/ml-medical-cost/config/pg-config.yml up -d --build --force-recreate
+            docker restart postgres-backend
+            docker restart postgres-mlflow
+          "
+
+  build_and_push_mlflow:
+    name: Build & Push Mlflow Docker Image
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+
+      - name: Build & Push Mlflow
+        run: |
+          docker build -t $IMAGE_MLFLOW:$TAG -f infrastructure/docker/mlflow/Dockerfile .
+          docker push $IMAGE_MLFLOW:$TAG
+          docker tag $IMAGE_MLFLOW:$TAG $IMAGE_MLFLOW:latest
+          docker push $IMAGE_MLFLOW:latest
+
+  # test:
+  #   name: Run Unit Tests
+  #   runs-on: self-hosted
+  #   steps:
+  #     - uses: actions/checkout@v3
+
+  #     - name: Set up Python environment
+  #       run: python3 -m venv .venv
+
+  #     - name: Activate virtual environment and install dependencies
+  #       run: |
+  #         source .venv/bin/activate
+  #         python -m pip install --upgrade pip
+  #         pip install --no-cache-dir .
+      
+  #     - name: Run Tests
+  #       run: .venv/bin/pytest -v
+
+  train:
+    name: Train & Choose the Best Model
+    runs-on: self-hosted
+    needs: build_and_push
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python environment
+        run: python3 -m venv .venv
+
+      - name: Activate virtual environment and install dependencies
+        run: |
+          source .venv/bin/activate
+          python -m pip install --upgrade pip && pip install uv
+          uv sync --group build
+            
+      - name: Run Training
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          source .venv/bin/activate
+          python -m src.main
+
+  build_and_push:
+    name: Build & Push Docker Images
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+
+      - name: Build & Push Backend
+        run: |
+          docker build -t $IMAGE_BACKEND:$TAG -f infrastructure/docker/backend/Dockerfile .
+          docker push $IMAGE_BACKEND:$TAG
+          docker tag $IMAGE_BACKEND:$TAG $IMAGE_BACKEND:latest
+          docker push $IMAGE_BACKEND:latest
+
+      - name: Build & Push Frontend
+        run: |
+          docker build -t $IMAGE_FRONTEND:$TAG -f infrastructure/docker/frontend/Dockerfile .
+          docker push $IMAGE_FRONTEND:$TAG
+          docker tag $IMAGE_FRONTEND:$TAG $IMAGE_FRONTEND:latest
+          docker push $IMAGE_FRONTEND:latest
+  
+  deploy:
+    name: Deploy to VPS
+    runs-on: self-hosted
+    needs: train
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Copy deploy files
+        run: |
+          scp -i ~/.ssh/id_rsa_ci -P ${{ secrets.SSH_PORT }} infrastructure/docker-compose/app.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/ml-medical-cost/
+      - name: Deploy App
+        run: |
+          ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+            docker compose -f ~/ml-medical-cost/app.yml pull
+            docker compose --env-file ~/ml-medical-cost/.env -f ~/ml-medical-cost/app.yml up -d --build --force-recreate
+            docker logout ghcr.io
+          "
