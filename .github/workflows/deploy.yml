@@ -48,7 +48,7 @@ jobs:
             PG_SSL_ADDRESS=${{ secrets.PG_SSL_ADDRESS }}
             PGADMIN_EMAIL=${{ secrets.PGADMIN_EMAIL }}
             PGADMIN_PASSWORD=${{ secrets.PGADMIN_PASSWORD }}
-            PGADMIN_EMAIL_PATH=$(echo "{{ secrets.PGADMIN_EMAIL }}" | tr '@' '_')
+            PGADMIN_EMAIL_PATH=$(echo "${{ secrets.PGADMIN_EMAIL }}" | tr '@' '_')
             POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
             EOT
           EOF
