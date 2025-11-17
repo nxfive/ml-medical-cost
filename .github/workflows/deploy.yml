@@ -36,7 +36,6 @@ jobs:
             BACKEND_POSTGRES_USER=${{ secrets.BACKEND_POSTGRES_USER }}
             CA_BACKEND=${{ secrets.CA_BACKEND }}
             CA_MLFLOW=${{ secrets.CA_MLFLOW }}
-            CA_MOUNT=${{ secrets.CA_MOUNT }}
             DATABASE_URL_PROD=${{ secrets.DATABASE_URL_PROD }}
             MLFLOW_HOST=${{ secrets.MLFLOW_HOST }}
             MLFLOW_POSTGRES_DB=${{ secrets.MLFLOW_POSTGRES_DB }}
