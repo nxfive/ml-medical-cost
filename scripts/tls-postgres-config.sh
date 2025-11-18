@@ -1,6 +1,9 @@
 #!/bin/bash
 set -eu
 
+PG_SSL_ADDRESS=$(cat /run/secrets/PG_SSL_ADDRESS)
+PG_MOUNT=$(cat /run/secrets/PG_MOUNT)
+
 PATHS=("/config/backend" "/config/mlflow")
 
 for p in "${PATHS[@]}"; do      
