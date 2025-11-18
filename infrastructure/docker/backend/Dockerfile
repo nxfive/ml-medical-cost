@@ -8,11 +8,11 @@ WORKDIR /backend
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
-    g++ \
-    libpq-dev \
-    libffi-dev &&\
+        build-essential \
+        gcc \
+        g++ \
+        libpq-dev \
+        libffi-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY pyproject.toml uv.lock alembic.ini ./
@@ -35,7 +35,7 @@ RUN apt-get update && \
         libffi-dev \
         libpq5 \
         netcat-openbsd && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /backend/.venv ./.venv
 COPY --from=builder /backend/alembic ./alembic
@@ -45,11 +45,13 @@ COPY --from=builder /backend/src ./src
 COPY --from=builder /backend/alembic.ini ./ 
 COPY --from=builder /backend/entrypoint.sh ./
 
-RUN ./.venv/bin/python -m ensurepip && \
-    ./.venv/bin/python -m pip install --upgrade pip
+RUN chmod +x /backend/entrypoint.sh
+
+RUN useradd -m user
+USER user
 
 ENV VIRTUAL_ENV="/backend/.venv"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV ENV="prod"
 
-ENTRYPOINT ["/bin/bash", "/backend/entrypoint.sh"]
+ENTRYPOINT ["/backend/entrypoint.sh"]
