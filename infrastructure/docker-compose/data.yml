@@ -2,10 +2,10 @@ services:
   postgres-backend:
     container_name: postgres-backend 
     image: postgres:15
-    environment:
-      POSTGRES_USER: ${BACKEND_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${BACKEND_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${BACKEND_POSTGRES_DB}
+    secrets:
+      - BACKEND_POSTGRES_USER
+      - BACKEND_POSTGRES_PASSWORD
+      - BACKEND_POSTGRES_DB
     volumes:
       - backend_postgres_data:${PG_MOUNT}/data
       - pg-certs-backend-server:${PG_MOUNT}/certs:ro
@@ -16,10 +16,10 @@ services:
   postgres-mlflow:
     container_name: postgres-mlflow
     image: postgres:15
-    environment:
-      POSTGRES_USER: ${MLFLOW_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${MLFLOW_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${MLFLOW_POSTGRES_DB}
+    secrets:
+      - MLFLOW_POSTGRES_USER
+      - MLFLOW_POSTGRES_PASSWORD
+      - MLFLOW_POSTGRES_DB
     volumes:
       - mlflow_postgres_data:${PG_MOUNT}/data
       - pg-certs-mlflow-server:${PG_MOUNT}/certs:ro
@@ -31,10 +31,10 @@ services:
     build:
       context: .
       dockerfile: pgadmin/Dockerfile
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
-      PGADMIN_EMAIL_PATH: ${PGADMIN_EMAIL_PATH}
+    secrets:
+      - PGADMIN_EMAIL
+      - PGADMIN_PASSWORD
+      - PGADMIN_EMAIL_PATH
     volumes:
       - pgadmin_data:/var/lib/pgadmin
       - pg-certs-backend-pgadmin:/var/lib/pgadmin/storage/${PGADMIN_EMAIL_PATH}/certs/backend
@@ -53,6 +53,14 @@ services:
 
   mlflow:
     image: ghcr.io/nxfive/ml-medical-cost/mlflow:latest
+    secrets:
+      - MLFLOW_POSTGRES_USER
+      - MLFLOW_POSTGRES_PASSWORD
+      - MLFLOW_POSTGRES_DB
+      - POSTGRES_PORT
+      - MLFLOW_HOST
+    environment:
+      POSTGRES_SERVICE: postgres-mlflow
     volumes:
       - ./mlflow_artifacts:/mlflow/artifacts
       - pg-certs-mlflow-client:/certs
@@ -65,13 +73,6 @@ services:
       - "traefik.http.services.mlflow.loadbalancer.server.port=5000"
       - "traefik.http.routers.mlflow.middlewares=mlflow-ipwhitelist@docker"
       - "traefik.http.middlewares.mlflow-ipwhitelist.ipwhitelist.sourcerange=10.200.200.0/24"
-    environment:
-      POSTGRES_SERVICE: postgres-mlflow
-      POSTGRES_USER: ${MLFLOW_POSTGRES_USER}
-      POSTGRES_PASS: ${MLFLOW_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${MLFLOW_POSTGRES_DB}
-      POSTGRES_PORT: ${POSTGRES_PORT}
-      MLFLOW_HOST: ${MLFLOW_HOST}
     networks:
       - traefik-net
       - internal-net
@@ -108,4 +109,27 @@ networks:
   traefik-net:
     external: true
   internal-net:
+    external: true
+
+
+secrets:
+  BACKEND_POSTGRES_USER:
+    external: true 
+  BACKEND_POSTGRES_PASSWORD:
+    external: true
+  BACKEND_POSTGRES_DB:
+    external: true
+
+  MLFLOW_POSTGRES_USER:
+    external: true
+  MLFLOW_POSTGRES_PASSWORD:
+    external: true
+  MLFLOW_POSTGRES_DB:
+    external: true
+
+  PGADMIN_EMAIL:
+    external: true
+  PGADMIN_PASSWORD:
+    external: true
+  PGADMIN_EMAIL_PATH:
     external: true
