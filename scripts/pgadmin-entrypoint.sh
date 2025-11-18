@@ -1,6 +1,10 @@
 #!/bin/bash
+set -e
 
-set -eu
+export PGADMIN_DEFAULT_EMAIL=$(cat /run/secrets/PGADMIN_EMAIL)
+export PGADMIN_DEFAULT_PASSWORD=$(cat /run/secrets/PGADMIN_PASSWORD)
+
+PGADMIN_EMAIL_PATH=$(cat /run/secrets/PGADMIN_EMAIL_PATH)
 
 mkdir -p /var/lib/pgadmin/storage/${PGADMIN_EMAIL_PATH}/certs/backend/
 mkdir -p /var/lib/pgadmin/storage/${PGADMIN_EMAIL_PATH}/certs/mlflow/
