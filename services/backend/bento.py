@@ -48,5 +48,5 @@ def register_bento_model(model_name: str, bento_name: str) -> None:
 
 
 if __name__ == "__main__":
-    setup_mlflow()
+    setup_mlflow(create_experiment=False)
     register_bento_model(model_name=MODEL_NAME, bento_name=BENTO_MODEL_NAME)
