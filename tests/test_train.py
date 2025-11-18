@@ -7,7 +7,7 @@ from src.models.train import run_pipeline
 
 
 @pytest.mark.parametrize(
-    "has_params, target_transformation",
+    "has_params, target_transformations",
     [
         (True, False),  # GridSearch, No Target Transformation
         (False, False),  # Cross-Validation, No Target Transformation
@@ -15,7 +15,7 @@ from src.models.train import run_pipeline
         (False, True),  # Cross-Validation, Target Transformation
     ]
 )
-def test_run_pipeline(has_params, target_transformation):
+def test_run_pipeline(has_params, target_transformations):
     X_train = pd.DataFrame({"feature": [1, 2, 3]})
     X_test = pd.DataFrame({"feature": [4, 5]})
     y_train = pd.Series([10, 20, 30])
@@ -39,7 +39,7 @@ def test_run_pipeline(has_params, target_transformation):
         ),
         mock.patch(
             "src.models.train.evaluate_target_transformers",
-            return_value=fake_eval_generator,
+            return_value=fake_eval_generator if target_transformations else [],
         ),
         mock.patch(
             "src.models.train.perform_cross_validation", return_value=fake_result
@@ -52,12 +52,12 @@ def test_run_pipeline(has_params, target_transformation):
         mock_cfg.models = {
             "LinearRegression": mock.Mock(
                 params={"param": [1, 2]} if has_params else {},
-                target_transformation=target_transformation,
+                target_transformations=target_transformations,
             )
         }
         results = list(run_pipeline(model_cls, X_train, X_test, y_train))
 
-        if target_transformation:
+        if target_transformations:
             assert len(results) == 2
             for (res, _, name), expected_name in zip(results, ["log", "quantile"]):
                 assert res is fake_result
