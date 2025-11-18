@@ -74,9 +74,9 @@ def test_log_model(train_data):
 
     mock_mlflow.log_param.assert_any_call("n_estimators", 200)
     mock_mlflow.log_param.assert_any_call("transformer", transformer_name)
-    mock_mlflow.log_metric.assert_any_call("test_r2", 0.88)
-    mock_mlflow.log_metric.assert_any_call("fold_1_r2", 0.9)
-    mock_mlflow.log_metric.assert_any_call("folds_r2_mean", 0.925)
+    mock_mlflow.log_metric.assert_any_call("test_r2", 0.88, step=mock.ANY)
+    mock_mlflow.log_metric.assert_any_call("fold_1_r2", 0.9, step=mock.ANY)
+    mock_mlflow.log_metric.assert_any_call("folds_r2_mean", 0.925, step=mock.ANY)
 
     mock_log_model.assert_called_once_with(
         fake_estimator, name="FakeModel", signature="signature", input_example=mock.ANY
