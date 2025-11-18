@@ -4,9 +4,9 @@ services:
       context: .
       dockerfile: postgres-config/Dockerfile
     image: postgres-config:local
-    environment:
-      PG_SSL_ADDRESS: ${PG_SSL_ADDRESS}
-      PG_MOUNT: ${PG_MOUNT}
+    secrets:
+       - PG_SSL_ADDRESS
+       - PG_MOUNT
     volumes:
       - backend_postgres_data:/config/backend
       - mlflow_postgres_data:/config/mlflow
@@ -21,3 +21,10 @@ volumes:
   mlflow_postgres_data:
     external: true
     name: ml-medical-cost_mlflow_postgres_data
+
+
+secrets:
+  PG_SSL_ADDRESS:
+    external: true 
+  PG_MOUNT:
+    external: true
