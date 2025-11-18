@@ -1,6 +1,7 @@
 #!/bin/bash
-
 set -e
+
+BENTO_PORT=$(cat /run/secrets/BACKEND_PORT)
 
 echo "Waiting for server..."
 
