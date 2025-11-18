@@ -1,7 +1,9 @@
 services:
   postgres-backend:
     container_name: postgres-backend 
-    image: postgres:15
+    build:
+      context: .
+      dockerfile: postgres/backend/Dockerfile
     secrets:
       - BACKEND_POSTGRES_USER
       - BACKEND_POSTGRES_PASSWORD
@@ -15,7 +17,9 @@ services:
 
   postgres-mlflow:
     container_name: postgres-mlflow
-    image: postgres:15
+    build:
+      context: .
+      dockerfile: postgres/mlflow/Dockerfile
     secrets:
       - MLFLOW_POSTGRES_USER
       - MLFLOW_POSTGRES_PASSWORD
