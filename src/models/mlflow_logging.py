@@ -9,24 +9,21 @@ from sklearn.base import BaseEstimator
 import uuid
 
 
-def setup_mlflow(exp=True):
+def setup_mlflow(create_experiment: bool = True):
     """
     Configures MLflow tracking for CI/CD or local runs.
     """
     remote_uri = os.getenv("MLFLOW_TRACKING_URI")
-
+    mlflow.set_tracking_uri(remote_uri or "http://localhost:5000")
+    
     commit_hash = os.getenv("GITHUB_SHA", "")[:7]
     timestamp = datetime.now().strftime("%Y-%m-%d-%H%M")
-
-    if remote_uri:
-        mlflow.set_tracking_uri(remote_uri)
-        mlflow.set_registry_uri(remote_uri)
-        experiment_name = f"ci-build-{commit_hash or timestamp}"
-    else:
-        mlflow.set_tracking_uri("http://localhost:5000")
-        experiment_name = f"local-test-{timestamp}"
-
-    mlflow.set_experiment(experiment_name)
+    
+    experiment_prefix = "ci-build" if remote_uri else "local-test"
+    experiment_name = f"{experiment_prefix}-{commit_hash or timestamp}"
+    
+    if create_experiment:
+        mlflow.set_experiment(experiment_name)
 
 
 def log_model(
