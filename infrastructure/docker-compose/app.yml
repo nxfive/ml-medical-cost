@@ -1,11 +1,11 @@
 services:
   backend:
     image: ghcr.io/nxfive/ml-medical-cost/backend:latest
-    environment:
-      DATABASE_URL_PROD: ${DATABASE_URL_PROD}
-      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_PROD}
-      DB_HOST: ${BACKEND_POSTGRES_HOST}
-      DB_PORT: ${POSTGRES_PORT}
+    secrets:
+      - DATABASE_URL_PROD
+      - MLFLOW_TRACKING_PROD
+      - BACKEND_POSTGRES_HOST
+      - POSTGRES_PORT
     volumes:
       - pg-certs-backend-client:/certs:ro
     networks:
@@ -15,7 +15,8 @@ services:
     image: ghcr.io/nxfive/ml-medical-cost/frontend:latest
     environment:
       BENTO_HOST: backend
-      BENTO_PORT: ${BACKEND_PORT}
+    secrets:
+      - BACKEND_PORT
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-net"
@@ -40,4 +41,16 @@ networks:
   traefik-net:
     external: true
   internal-net:
+    external: true
+
+secrets:
+  BACKEND_PORT:
+    external: true 
+  DATABASE_URL_PROD:
+    external: true
+  MLFLOW_TRACKING_PROD:
+    external: true
+  BACKEND_POSTGRES_HOST:
+    external: true
+  POSTGRES_PORT:
     external: true
