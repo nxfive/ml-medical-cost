@@ -36,7 +36,7 @@ jobs:
             "IMAGE_POSTGRES_CONFIG=infrastructure/docker/postgres-config/Dockerfile"
             "IMAGE_CERT_GENERATOR=infrastructure/docker/cert-generator/Dockerfile"
           )
-          for pair in "{paths[@]}"; do
+          for pair in "${paths[@]}"; do
             name=${pair%%=*}
             value=${pair#*=}
 
