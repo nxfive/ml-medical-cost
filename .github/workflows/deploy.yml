@@ -68,6 +68,8 @@ jobs:
             for pair in "${secrets[@]}"; do
                 name=${pair%%=*}
                 value=${pair#*=}
+                echo $name
+                echo $value
                 docker secret rm "$name" 2>/dev/null || true
                 echo "$value" | docker secret create "$name" -
             done
