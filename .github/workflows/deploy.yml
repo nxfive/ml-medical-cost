@@ -134,7 +134,7 @@ jobs:
           ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER}}@${{ secrets.VPS_HOST }} << EOF
             export CA_BACKEND=${{ secrets.CA_BACKEND }}
             export CA_MLFLOW=${{ secrets.CA_MLFLOW }}
-            docker compose -f ~/ml-medical-cost/config/tls.yml up -d --build --force-recreate
+            docker stack deploy -c ~/ml-medical-cost/config/tls.yml ml-medical-cost
           EOF
 
       - name: Copy services files
@@ -151,14 +151,13 @@ jobs:
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
             export PGADMIN_EMAIL_PATH=${{ secrets.PGADMIN_EMAIL_PATH }}
             export PG_MOUNT=${{ secrets.PG_MOUNT }}
-            docker compose -f ~/ml-medical-cost/data.yml pull
-            docker compose -f ~/ml-medical-cost/data.yml up -d --build --force-recreate
+            docker stack deploy -c ~/ml-medical-cost/data.yml ml-medical-cost
             docker logout ghcr.io
           EOF
       - name: Run ssl/tls postgres config setup
         run: |
           ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
-            docker compose -f ~/ml-medical-cost/config/pg-config.yml up -d --build --force-recreate
+            docker stack deploy -c ~/ml-medical-cost/config/pg-config.yml ml-medical-cost
             docker restart postgres-backend
             docker restart postgres-mlflow
           "
@@ -250,7 +249,6 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
-            docker compose -f ~/ml-medical-cost/app.yml pull
-            docker compose -f ~/ml-medical-cost/app.yml up -d --build --force-recreate
+            docker stack deploy -c ~/ml-medical-cost/app.yml ml-medical-cost
             docker logout ghcr.io
           "
