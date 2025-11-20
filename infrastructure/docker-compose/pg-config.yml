@@ -1,16 +1,15 @@
 services:
   postgres-config:
-    build:
-      context: .
-      dockerfile: postgres-config/Dockerfile
-    image: postgres-config:local
+    image: ghcr.io/nxfive/ml-medical-cost/postgres-config:latest
     secrets:
        - PG_SSL_ADDRESS
        - PG_MOUNT
     volumes:
       - backend_postgres_data:/config/backend
       - mlflow_postgres_data:/config/mlflow
-    restart: "no"
+    deploy:
+      restart_policy:
+        condition: none 
 
 
 volumes:
