@@ -81,32 +81,29 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << EOF
             secrets=(
-              "BACKEND_PORT=${BACKEND_PORT}"
-              "BACKEND_POSTGRES_DB=${BACKEND_POSTGRES_DB}"
-              "BACKEND_POSTGRES_HOST=${BACKEND_POSTGRES_HOST}"
-              "BACKEND_POSTGRES_PASSWORD=${BACKEND_POSTGRES_PASSWORD}"
-              "BACKEND_POSTGRES_USER=${BACKEND_POSTGRES_USER}"
-              "CA_BACKEND=${CA_BACKEND}"
-              "CA_MLFLOW=${CA_MLFLOW}"
-              "DATABASE_URL_PROD=${DATABASE_URL_PROD}"
-              "MLFLOW_HOST=${MLFLOW_HOST}"
-              "MLFLOW_POSTGRES_DB=${MLFLOW_POSTGRES_DB}"
-              "MLFLOW_POSTGRES_PASSWORD=${MLFLOW_POSTGRES_PASSWORD}"
-              "MLFLOW_POSTGRES_USER=${MLFLOW_POSTGRES_USER}"
-              "MLFLOW_TRACKING_PROD=${MLFLOW_TRACKING_PROD}"
-              "MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI}"
-              "PG_MOUNT=${PG_MOUNT}"
-              "PG_SSL_ADDRESS=${PG_SSL_ADDRESS}"
-              "PGADMIN_EMAIL=${PGADMIN_EMAIL}"
-              "PGADMIN_PASSWORD=${PGADMIN_PASSWORD}"
-              "POSTGRES_PORT=${POSTGRES_PORT}"
+              "BACKEND_PORT"
+              "BACKEND_POSTGRES_DB"
+              "BACKEND_POSTGRES_HOST"
+              "BACKEND_POSTGRES_PASSWORD"
+              "BACKEND_POSTGRES_USER"
+              "CA_BACKEND"
+              "CA_MLFLOW"
+              "DATABASE_URL_PROD"
+              "MLFLOW_HOST"
+              "MLFLOW_POSTGRES_DB"
+              "MLFLOW_POSTGRES_PASSWORD"
+              "MLFLOW_POSTGRES_USER"
+              "MLFLOW_TRACKING_PROD"
+              "MLFLOW_TRACKING_URI"
+              "PG_MOUNT"
+              "PG_SSL_ADDRESS"
+              "PGADMIN_EMAIL"
+              "PGADMIN_PASSWORD"
+              "POSTGRES_PORT"
             )
 
-            for pair in "${secrets[@]}"; do
-              name=${pair%%=*}
-              value=${pair#*=}
-              echo $name
-              echo $value
+            for name in "${secrets[@]}"; do
+              value=$(eval echo \$$name)  
               docker secret rm "$name" 2>/dev/null || true
               echo "$value" | docker secret create "$name" -
             done
@@ -115,11 +112,6 @@ jobs:
             docker secret rm PGADMIN_EMAIL_PATH 2>/dev/null || true
             echo "$PGADMIN_EMAIL_PATH" | docker secret create PGADMIN_EMAIL_PATH -
           EOF
-
-
-
-          
-
 
   setup:
     name: Setup Services
