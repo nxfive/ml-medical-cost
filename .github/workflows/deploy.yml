@@ -9,11 +9,16 @@ env:
   IMAGE_BACKEND: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/backend
   IMAGE_FRONTEND: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/frontend
   IMAGE_MLFLOW: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/mlflow
+  IMAGE_PGADMIN: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/pgadmin
+  IMAGE_POSTGRES_BACKEND: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/postgres-backend
+  IMAGE_POSTGRES_MLFLOW: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/postgres-mlflow
+  IMAGE_POSTGRS_CONFIG: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/postgres-config
+  IMAGE_CERT_GENERATOR: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/cert-generator
   TAG: ${{ github.run_id }}
 
 jobs:
   build_and_push_mlflow:
-    name: Build & Push Mlflow Docker Image
+    name: Build & Push Config/Services Docker Image
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -21,12 +26,24 @@ jobs:
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
 
-      - name: Build & Push Mlflow
+      - name: Build & Push Docker Images
         run: |
-          docker build -t $IMAGE_MLFLOW:$TAG -f infrastructure/docker/mlflow/Dockerfile .
-          docker push $IMAGE_MLFLOW:$TAG
-          docker tag $IMAGE_MLFLOW:$TAG $IMAGE_MLFLOW:latest
-          docker push $IMAGE_MLFLOW:latest
+          paths=(
+            IMAGE_MLFLOW="infrastructure/docker/mlflow/Dockerfile"
+            IMAGE_PGADMIN="infrastructure/docker/pgadmin/Dockerfile"
+            IMAGE_POSTGRES_BACKEND="infrastructure/docker/postgres-backend/Dockerfile"
+            IMAGE_POSTGRES_MLFLOW="infrastructure/docker/postgres-mlflow/Dockerfile"
+            IMAGE_POSTGRES_CONFIG="infrastructure/docker/postgres-config/Dockerfile"
+            IMAGE_CERT_GENERATOR="infrastructure/docker/cert-generator/Dockerfile"
+          )
+          for pair in "{paths[@]}"
+            name=${pair%%=*}
+            value=${pair#*=}
+
+            docker build -t $name:$TAG -f "$value" .
+            docker push $name:$TAG
+            docker tag $name:$TAG $name:latest
+            docker push $name:latest
 
       - name: Logout from GitHub Container Registry
         run: docker logout ghcr.io
@@ -158,8 +175,6 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
             docker stack deploy -c ~/ml-medical-cost/config/pg-config.yml ml-medical-cost
-            docker restart postgres-backend
-            docker restart postgres-mlflow
           "
   train:
     name: Train & Choose the Best Model
