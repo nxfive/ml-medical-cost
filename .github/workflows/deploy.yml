@@ -79,7 +79,7 @@ jobs:
           PGADMIN_PASSWORD: ${{ secrets.PGADMIN_PASSWORD }}
           POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
         run: |
-          ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "bash -s" << EOF
+          ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << EOF
             secrets=(
               "BACKEND_PORT=${BACKEND_PORT}"
               "BACKEND_POSTGRES_DB=${BACKEND_POSTGRES_DB}"
@@ -103,10 +103,12 @@ jobs:
             )
 
             for pair in "${secrets[@]}"; do
-                name=${pair%%=*}
-                value=${pair#*=}
-                docker secret rm "$name" 2>/dev/null || true
-                echo "$value" | docker secret create "$name" -
+              name=${pair%%=*}
+              value=${pair#*=}
+              echo $name
+              echo $value
+              docker secret rm "$name" 2>/dev/null || true
+              echo "$value" | docker secret create "$name" -
             done
 
             PGADMIN_EMAIL_PATH=$(echo "$PGADMIN_EMAIL" | tr '@' '_')
