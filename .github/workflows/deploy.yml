@@ -12,6 +12,25 @@ env:
   TAG: ${{ github.run_id }}
 
 jobs:
+  build_and_push_mlflow:
+    name: Build & Push Mlflow Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+
+      - name: Build & Push Mlflow
+        run: |
+          docker build -t $IMAGE_MLFLOW:$TAG -f infrastructure/docker/mlflow/Dockerfile .
+          docker push $IMAGE_MLFLOW:$TAG
+          docker tag $IMAGE_MLFLOW:$TAG $IMAGE_MLFLOW:latest
+          docker push $IMAGE_MLFLOW:latest
+
+      - name: Logout from GitHub Container Registry
+        run: docker logout ghcr.io
+  
   create_env:
     name: Create .env File
     runs-on: self-hosted
@@ -23,26 +42,28 @@ jobs:
       - name: Create Docker Secrets
         run: |
           ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << EOF
-            echo "${{ secrets.BACKEND_PORT }}" | docker secret create BACKEND_PORT -
-            echo "${{ secrets.BACKEND_POSTGRES_DB }}" | docker secret create BACKEND_POSTGRES_DB -
-            echo "${{ secrets.BACKEND_POSTGRES_HOST }}" | docker secret create BACKEND_POSTGRES_HOST -
-            echo "${{ secrets.BACKEND_POSTGRES_PASSWORD }}" | docker secret create BACKEND_POSTGRES_PASSWORD -
-            echo "${{ secrets.BACKEND_POSTGRES_USER }}" | docker secret create BACKEND_POSTGRES_USER -
-            echo "${{ secrets.CA_BACKEND }}" | docker secret create CA_BACKEND -
-            echo "${{ secrets.CA_MLFLOW }}" | docker secret create CA_MLFLOW -
-            echo "${{ secrets.DATABASE_URL_PROD }}" | docker secret create DATABASE_URL_PROD -
-            echo "${{ secrets.MLFLOW_HOST }}" | docker secret create MLFLOW_HOST -
-            echo "${{ secrets.MLFLOW_POSTGRES_DB }}" | docker secret create MLFLOW_POSTGRES_DB -
-            echo "${{ secrets.MLFLOW_POSTGRES_PASSWORD }}" | docker secret create MLFLOW_POSTGRES_PASSWORD -
-            echo "${{ secrets.MLFLOW_POSTGRES_USER }}" | docker secret create MLFLOW_POSTGRES_USER -
-            echo "${{ secrets.MLFLOW_TRACKING_PROD }}" | docker secret create MLFLOW_TRACKING_PROD -
-            echo "${{ secrets.MLFLOW_TRACKING_URI }}" | docker secret create MLFLOW_TRACKING_URI -
-            echo "${{ secrets.PG_MOUNT }}" | docker secret create PG_MOUNT -
-            echo "${{ secrets.PG_SSL_ADDRESS }}" | docker secret create PG_SSL_ADDRESS -
-            echo "${{ secrets.PGADMIN_EMAIL }}" | docker secret create PGADMIN_EMAIL -
-            echo "${{ secrets.PGADMIN_PASSWORD }}" | docker secret create PGADMIN_PASSWORD -
-            echo "$(echo "${{ secrets.PGADMIN_EMAIL }}" | tr '@' '_')" | docker secret create PGADMIN_EMAIL_PATH -
-            echo "${{ secrets.POSTGRES_PORT }}" | docker secret create POSTGRES_PORT -
+            for secret_name in BACKEND_PORT \
+                               BACKEND_POSTGRES_DB \
+                               BACKEND_POSTGRES_HOST \
+                               BACKEND_POSTGRES_PASSWORD \
+                               BACKEND_POSTGRES_USER \
+                               CA_BACKEND CA_MLFLOW \
+                               DATABASE_URL_PROD \
+                               MLFLOW_HOST \
+                               MLFLOW_POSTGRES_DB \
+                               MLFLOW_POSTGRES_PASSWORD \
+                               MLFLOW_POSTGRES_USER \
+                               MLFLOW_TRACKING_PROD \
+                               MLFLOW_TRACKING_URI \
+                               PG_MOUNT \
+                               PG_SSL_ADDRESS \
+                               PGADMIN_EMAIL \
+                               PGADMIN_PASSWORD \
+                               PGADMIN_EMAIL_PATH \
+                               POSTGRES_PORT; do
+              docker secret rm $secret_name 2>/dev/null || true
+              echo "${{ secrets[$secret_name] }}" | docker secret create $secret_name -
+              echo "$(echo "${{ secrets.PGADMIN_EMAIL }}" | tr '@' '_')" | docker secret create PGADMIN_EMAIL_PATH -
           EOF
 
   setup:
@@ -110,50 +131,10 @@ jobs:
             docker restart postgres-backend
             docker restart postgres-mlflow
           "
-
-  build_and_push_mlflow:
-    name: Build & Push Mlflow Docker Image
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Login to GitHub Container Registry
-        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
-
-      - name: Build & Push Mlflow
-        run: |
-          docker build -t $IMAGE_MLFLOW:$TAG -f infrastructure/docker/mlflow/Dockerfile .
-          docker push $IMAGE_MLFLOW:$TAG
-          docker tag $IMAGE_MLFLOW:$TAG $IMAGE_MLFLOW:latest
-          docker push $IMAGE_MLFLOW:latest
-
-      - name: Logout from GitHub Container Registry
-        run: docker logout ghcr.io
-
-  test:
-    name: Run Unit Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python environment
-        run: python3 -m venv .venv
-
-      - name: Activate virtual environment and install dependencies
-        run: |
-          source .venv/bin/activate
-          python -m pip install --upgrade pip && pip install uv
-          uv sync --group build
-      
-      - name: Run Tests
-        run: | 
-          source .venv/bin/activate
-          pytest -v
-
   train:
     name: Train & Choose the Best Model
     runs-on: self-hosted
-    needs: build_and_push
+    needs: setup
     steps:
       - uses: actions/checkout@v3
 
@@ -174,10 +155,32 @@ jobs:
           source .venv/bin/activate
           python -m src.main
 
-  build_and_push:
-    name: Build & Push Docker Images
+  test:
+    name: Run Unit Tests
     runs-on: ubuntu-latest
-    needs: setup
+    needs: train
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python environment
+        run: python3 -m venv .venv
+
+      - name: Activate virtual environment and install dependencies
+        run: |
+          source .venv/bin/activate
+          python -m pip install --upgrade pip && pip install uv
+          uv sync --group build
+      
+      - name: Run Tests
+        run: | 
+          source .venv/bin/activate
+          pytest -v
+
+
+  build_and_push:
+    name: Build & Push Backend/Frontend Images
+    runs-on: ubuntu-latest
+    needs: test
     steps:
       - uses: actions/checkout@v3
 
@@ -204,7 +207,7 @@ jobs:
   deploy:
     name: Deploy to VPS
     runs-on: self-hosted
-    needs: train
+    needs: build_and_push
     steps:
       - uses: actions/checkout@v3
 
