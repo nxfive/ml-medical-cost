@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
 
-POSTGRES_USER=$(cat /run/secrets/POSTGRES_USER)
-POSTGRES_PASS=$(cat /run/secrets/POSTGRES_PASS)
+POSTGRES_USER=$(cat /run/secrets/MLFLOW_POSTGRES_USER)
+POSTGRES_PASS=$(cat /run/secrets/MLFLOW_POSTGRES_PASSWORD)
 POSTGRES_PORT=$(cat /run/secrets/POSTGRES_PORT)
-POSTGRES_DB=$(cat /run/secrets/POSTGRES_DB)
+POSTGRES_DB=$(cat /run/secrets/MLFLOW_POSTGRES_DB)
 MLFLOW_HOST=$(cat /run/secrets/MLFLOW_HOST)
 
 mlflow server \
