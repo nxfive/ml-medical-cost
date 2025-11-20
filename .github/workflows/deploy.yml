@@ -12,7 +12,7 @@ env:
   IMAGE_PGADMIN: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/pgadmin
   IMAGE_POSTGRES_BACKEND: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/postgres-backend
   IMAGE_POSTGRES_MLFLOW: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/postgres-mlflow
-  IMAGE_POSTGRS_CONFIG: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/postgres-config
+  IMAGE_POSTGRES_CONFIG: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/postgres-config
   IMAGE_CERT_GENERATOR: ghcr.io/${{ secrets.GHCR_USERNAME }}/ml-medical-cost/cert-generator
   TAG: ${{ github.run_id }}
 
