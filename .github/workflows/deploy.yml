@@ -83,6 +83,7 @@ jobs:
               PGADMIN_PASSWORD
               POSTGRES_PORT
             )
+            echo $BACKEND_PORT
 
             for secret_name in "${secrets[@]}"; do
               docker secret rm "$secret_name" 2>/dev/null || true
