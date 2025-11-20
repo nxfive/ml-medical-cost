@@ -1,6 +1,6 @@
 services:
   postgres-backend:
-    image: ghcr.io/nxfive/ml-medical-cost/postgres-backend:latest
+    image: ghcr.io/nxfive/ml-medical-cost/postgres-backend:${TAG}
     secrets:
       - BACKEND_POSTGRES_USER
       - BACKEND_POSTGRES_PASSWORD
@@ -15,7 +15,7 @@ services:
         condition: unless-stopped
 
   postgres-mlflow:
-    image: ghcr.io/nxfive/ml-medical-cost/postgres-mlflow:latest
+    image: ghcr.io/nxfive/ml-medical-cost/postgres-mlflow:${TAG}
     secrets:
       - MLFLOW_POSTGRES_USER
       - MLFLOW_POSTGRES_PASSWORD
@@ -30,7 +30,7 @@ services:
         condition: unless-stopped
     
   pgadmin:
-    image: ghcr.io/nxfive/ml-medical-cost/pgadmin:latest
+    image: ghcr.io/nxfive/ml-medical-cost/pgadmin:${TAG}
     secrets:
       - PGADMIN_EMAIL
       - PGADMIN_PASSWORD
@@ -54,7 +54,7 @@ services:
         condition: unless-stopped
 
   mlflow:
-    image: ghcr.io/nxfive/ml-medical-cost/mlflow:latest
+    image: ghcr.io/nxfive/ml-medical-cost/mlflow:${TAG}
     secrets:
       - MLFLOW_POSTGRES_USER
       - MLFLOW_POSTGRES_PASSWORD
