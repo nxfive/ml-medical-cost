@@ -137,3 +137,6 @@ secrets:
     external: true
   PGADMIN_EMAIL_PATH:
     external: true
+  
+  POSTGRES_PORT:
+    external: true
