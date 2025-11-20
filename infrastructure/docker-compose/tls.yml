@@ -1,6 +1,6 @@
 services:
   cert-generator-backend:
-    image: ghcr.io/nxfive/ml-medical-cost/cert-generator:latest
+    image: ghcr.io/nxfive/ml-medical-cost/cert-generator:${TAG}
     environment:
       SERVICE: backend
       DST_SERVER: /server-certs
@@ -17,7 +17,7 @@ services:
         condition: none 
 
   cert-generator-mlflow:
-    image: ghcr.io/nxfive/ml-medical-cost/cert-generator:latest
+    image: ghcr.io/nxfive/ml-medical-cost/cert-generator:${TAG}
     environment:
       SERVICE: mlflow
       DST_SERVER: /server-certs
