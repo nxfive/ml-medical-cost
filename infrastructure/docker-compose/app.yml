@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ghcr.io/nxfive/ml-medical-cost/backend:latest
+    image: ghcr.io/nxfive/ml-medical-cost/backend:${TAG}
     secrets:
       - DATABASE_URL_PROD
       - MLFLOW_TRACKING_PROD
@@ -12,7 +12,7 @@ services:
       - internal-net
 
   frontend:
-    image: ghcr.io/nxfive/ml-medical-cost/frontend:latest
+    image: ghcr.io/nxfive/ml-medical-cost/frontend:${TAG}
     environment:
       BENTO_HOST: backend
     secrets:
