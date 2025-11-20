@@ -29,14 +29,14 @@ jobs:
       - name: Build & Push Docker Images
         run: |
           paths=(
-            IMAGE_MLFLOW="infrastructure/docker/mlflow/Dockerfile"
-            IMAGE_PGADMIN="infrastructure/docker/pgadmin/Dockerfile"
-            IMAGE_POSTGRES_BACKEND="infrastructure/docker/postgres-backend/Dockerfile"
-            IMAGE_POSTGRES_MLFLOW="infrastructure/docker/postgres-mlflow/Dockerfile"
-            IMAGE_POSTGRES_CONFIG="infrastructure/docker/postgres-config/Dockerfile"
-            IMAGE_CERT_GENERATOR="infrastructure/docker/cert-generator/Dockerfile"
+            "IMAGE_MLFLOW=infrastructure/docker/mlflow/Dockerfile"
+            "IMAGE_PGADMIN=infrastructure/docker/pgadmin/Dockerfile"
+            "IMAGE_POSTGRES_BACKEND=infrastructure/docker/postgres-backend/Dockerfile"
+            "IMAGE_POSTGRES_MLFLOW=infrastructure/docker/postgres-mlflow/Dockerfile"
+            "IMAGE_POSTGRES_CONFIG=infrastructure/docker/postgres-config/Dockerfile"
+            "IMAGE_CERT_GENERATOR=infrastructure/docker/cert-generator/Dockerfile"
           )
-          for pair in "{paths[@]}"
+          for pair in "{paths[@]}"; do
             name=${pair%%=*}
             value=${pair#*=}
 
@@ -44,7 +44,7 @@ jobs:
             docker push $name:$TAG
             docker tag $name:$TAG $name:latest
             docker push $name:latest
-
+          done
       - name: Logout from GitHub Container Registry
         run: docker logout ghcr.io
   
