@@ -1,39 +1,37 @@
 services:
   cert-generator-backend:
-    build:
-      context: .
-      dockerfile: cert-generator/Dockerfile 
-    image: cert-generator-backend:local
+    image: ghcr.io/nxfive/ml-medical-cost/cert-generator:latest
     environment:
-      - SERVICE=backend
-      - DST_SERVER=/server-certs
-      - DST_CLIENT=/client-certs
-      - DST_PGADMIN=/pgadmin-certs
+      SERVICE: backend
+      DST_SERVER: /server-certs
+      DST_CLIENT: /client-certs
+      DST_PGADMIN: /pgadmin-certs
     volumes:
       - pg-certs-backend:/out
       - ${CA_BACKEND}:/ca/ca.key:ro
       - pg-certs-backend-server:/server-certs
       - pg-certs-backend-client:/client-certs
       - pg-certs-backend-pgadmin:/pgadmin-certs
-    restart: "no"
+    deploy:
+      restart_policy:
+        condition: none 
 
   cert-generator-mlflow:
-    build:
-      context: .
-      dockerfile: cert-generator/Dockerfile
-    image: cert-generator-mlflow:local
+    image: ghcr.io/nxfive/ml-medical-cost/cert-generator:latest
     environment:
-      - SERVICE=mlflow
-      - DST_SERVER=/server-certs
-      - DST_CLIENT=/client-certs
-      - DST_PGADMIN=/pgadmin-certs
+      SERVICE: mlflow
+      DST_SERVER: /server-certs
+      DST_CLIENT: /client-certs
+      DST_PGADMIN: /pgadmin-certs
     volumes:
       - pg-certs-mlflow:/out
       - ${CA_MLFLOW}:/ca/ca.key:ro
       - pg-certs-mlflow-server:/server-certs
       - pg-certs-mlflow-client:/client-certs
       - pg-certs-mlflow-pgadmin:/pgadmin-certs
-    restart: "no"
+    deploy:
+      restart_policy:
+        condition: none 
 
 
 volumes:
