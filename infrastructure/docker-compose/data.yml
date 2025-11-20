@@ -12,7 +12,7 @@ services:
       - internal-net
     deploy:
       restart_policy:
-        condition: unless-stopped
+        condition: any
 
   postgres-mlflow:
     image: ghcr.io/nxfive/ml-medical-cost/postgres-mlflow:${TAG}
@@ -27,7 +27,7 @@ services:
       - internal-net
     deploy:
       restart_policy:
-        condition: unless-stopped
+        condition: any
     
   pgadmin:
     image: ghcr.io/nxfive/ml-medical-cost/pgadmin:${TAG}
@@ -51,7 +51,7 @@ services:
       - internal-net
     deploy:
       restart_policy:
-        condition: unless-stopped
+        condition: any
 
   mlflow:
     image: ghcr.io/nxfive/ml-medical-cost/mlflow:${TAG}
@@ -80,7 +80,7 @@ services:
       - internal-net
     deploy:
       restart_policy:
-        condition: unless-stopped
+        condition: any
 
 
 volumes:
