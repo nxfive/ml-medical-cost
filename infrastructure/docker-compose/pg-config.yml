@@ -1,6 +1,6 @@
 services:
   postgres-config:
-    image: ghcr.io/nxfive/ml-medical-cost/postgres-config:latest
+    image: ghcr.io/nxfive/ml-medical-cost/postgres-config:${TAG}
     secrets:
        - PG_SSL_ADDRESS
        - PG_MOUNT
