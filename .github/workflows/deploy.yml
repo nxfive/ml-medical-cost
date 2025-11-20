@@ -108,9 +108,9 @@ jobs:
               echo "$value" | docker secret create "$name" -
             done
 
-            PGADMIN_EMAIL_PATH=$(echo "$PGADMIN_EMAIL" | tr '@' '_')
-            docker secret rm PGADMIN_EMAIL_PATH 2>/dev/null || true
-            echo "$PGADMIN_EMAIL_PATH" | docker secret create PGADMIN_EMAIL_PATH -
+            #PGADMIN_EMAIL_PATH=$(echo "$PGADMIN_EMAIL" | tr '@' '_')
+            #docker secret rm PGADMIN_EMAIL_PATH 2>/dev/null || true
+            #echo "$PGADMIN_EMAIL_PATH" | docker secret create PGADMIN_EMAIL_PATH -
           EOF
 
   setup:
