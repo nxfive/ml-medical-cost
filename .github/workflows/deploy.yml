@@ -43,26 +43,26 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa_ci -p ${{ secrets.SSH_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << EOF
             secrets=(
-              BACKEND_PORT=${{ secrets.BACKEND_PORT }}
-              BACKEND_POSTGRES_DB=${{ secrets.BACKEND_POSTGRES_DB }}
-              BACKEND_POSTGRES_HOST=${{ secrets.BACKEND_POSTGRES_HOST }}
-              BACKEND_POSTGRES_PASSWORD=${{ secrets.BACKEND_POSTGRES_PASSWORD }}
-              BACKEND_POSTGRES_USER=${{ secrets.BACKEND_POSTGRES_USER }}
-              CA_BACKEND=${{ secrets.CA_BACKEND }}
-              CA_MLFLOW=${{ secrets.CA_MLFLOW }}
-              DATABASE_URL_PROD=${{ secrets.DATABASE_URL_PROD }}
-              MLFLOW_HOST=${{ secrets.MLFLOW_HOST }}
-              MLFLOW_POSTGRES_DB=${{ secrets.MLFLOW_POSTGRES_DB }}
-              MLFLOW_POSTGRES_PASSWORD=${{ secrets.MLFLOW_POSTGRES_PASSWORD }}
-              MLFLOW_POSTGRES_USER=${{ secrets.MLFLOW_POSTGRES_USER }}
-              MLFLOW_TRACKING_PROD=${{ secrets.MLFLOW_TRACKING_PROD }}
-              MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }}
-              PG_MOUNT=${{ secrets.PG_MOUNT }}
-              PG_SSL_ADDRESS=${{ secrets.PG_SSL_ADDRESS }}
-              PGADMIN_EMAIL=${{ secrets.PGADMIN_EMAIL }}
-              PGADMIN_PASSWORD=${{ secrets.PGADMIN_PASSWORD }}
-              PGADMIN_EMAIL_PATH=$(echo "${{ secrets.PGADMIN_EMAIL }}" | tr '@' '_')
-              POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
+              BACKEND_PORT="${{ secrets.BACKEND_PORT }}"
+              BACKEND_POSTGRES_DB="${{ secrets.BACKEND_POSTGRES_DB }}"
+              BACKEND_POSTGRES_HOST="${{ secrets.BACKEND_POSTGRES_HOST }}"
+              BACKEND_POSTGRES_PASSWORD="${{ secrets.BACKEND_POSTGRES_PASSWORD }}"
+              BACKEND_POSTGRES_USER="${{ secrets.BACKEND_POSTGRES_USER }}"
+              CA_BACKEND="${{ secrets.CA_BACKEND }}"
+              CA_MLFLOW="${{ secrets.CA_MLFLOW }}"
+              DATABASE_URL_PROD="${{ secrets.DATABASE_URL_PROD }}"
+              MLFLOW_HOST="${{ secrets.MLFLOW_HOST }}"
+              MLFLOW_POSTGRES_DB="${{ secrets.MLFLOW_POSTGRES_DB }}"
+              MLFLOW_POSTGRES_PASSWORD="${{ secrets.MLFLOW_POSTGRES_PASSWORD }}"
+              MLFLOW_POSTGRES_USER="${{ secrets.MLFLOW_POSTGRES_USER }}"
+              MLFLOW_TRACKING_PROD="${{ secrets.MLFLOW_TRACKING_PROD }}"
+              MLFLOW_TRACKING_URI="${{ secrets.MLFLOW_TRACKING_URI }}"
+              PG_MOUNT="${{ secrets.PG_MOUNT }}"
+              PG_SSL_ADDRESS="${{ secrets.PG_SSL_ADDRESS }}"
+              PGADMIN_EMAIL="${{ secrets.PGADMIN_EMAIL }}"
+              PGADMIN_PASSWORD="${{ secrets.PGADMIN_PASSWORD }}"
+              PGADMIN_EMAIL_PATH="$(echo '${{ secrets.PGADMIN_EMAIL }}' | tr '@' '_')"
+              POSTGRES_PORT="${{ secrets.POSTGRES_PORT }}"
             )
 
             for pair in "${secrets[@]}"; do
