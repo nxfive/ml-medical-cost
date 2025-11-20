@@ -124,6 +124,8 @@ secrets:
   BACKEND_POSTGRES_DB:
     external: true
 
+  MLFLOW_HOST:
+    external: true
   MLFLOW_POSTGRES_USER:
     external: true
   MLFLOW_POSTGRES_PASSWORD:
