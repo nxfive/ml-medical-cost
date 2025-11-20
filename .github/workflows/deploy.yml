@@ -37,16 +37,15 @@ jobs:
             "IMAGE_CERT_GENERATOR=infrastructure/docker/cert-generator/Dockerfile"
           )
           for pair in "${paths[@]}"; do
-            for pair in "${paths[@]}"; do
-              var_name=${pair%%=*}      
-              dockerfile=${pair#*=}     
-              image_name=$(eval echo \$$var_name)  
+            var_name=${pair%%=*}      
+            dockerfile=${pair#*=}     
+            image_name=$(eval echo \$$var_name)  
 
-              docker build -t $image_name:$TAG -f "$dockerfile" .
-              docker push $image_name:$TAG
-              docker tag $image_name:$TAG $image_name:latest
-              docker push $image_name:latest
-            done
+            docker build -t $image_name:$TAG -f "$dockerfile" .
+            docker push $image_name:$TAG
+            docker tag $image_name:$TAG $image_name:latest
+            docker push $image_name:latest
+          done
       - name: Logout from GitHub Container Registry
         run: docker logout ghcr.io
   
