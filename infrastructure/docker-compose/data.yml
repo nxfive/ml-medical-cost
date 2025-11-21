@@ -46,6 +46,7 @@ services:
       - "traefik.http.routers.pgadmin.tls=true"
       - "traefik.http.routers.pgadmin.middlewares=pgadmin-ipwhitelist@docker"
       - "traefik.http.middlewares.pgadmin-ipwhitelist.ipwhitelist.sourcerange=10.200.200.0/24"
+      - "traefik.http.services.ml-medical-cost_pgadmin.loadbalancer.server.port=80"
     networks:
       - traefik-net
       - internal-net
@@ -62,7 +63,7 @@ services:
       - POSTGRES_PORT
       - MLFLOW_HOST
     environment:
-      POSTGRES_SERVICE: postgres-mlflow
+      POSTGRES_SERVICE: ml-medical-cost_postgres-mlflow
     volumes:
       - ./mlflow_artifacts:/mlflow/artifacts
       - pg-certs-mlflow-client:/certs
@@ -72,7 +73,7 @@ services:
       - "traefik.http.routers.mlflow.rule=Host(`mlflow.nxfive.pl`)"
       - "traefik.http.routers.mlflow.tls=true"
       - "traefik.http.routers.mlflow.service=mlflow"
-      - "traefik.http.services.mlflow.loadbalancer.server.port=5000"
+      - "traefik.http.services.ml-medical-cost_mlflow.loadbalancer.server.port=5000"
       - "traefik.http.routers.mlflow.middlewares=mlflow-ipwhitelist@docker"
       - "traefik.http.middlewares.mlflow-ipwhitelist.ipwhitelist.sourcerange=10.200.200.0/24"
     networks:
