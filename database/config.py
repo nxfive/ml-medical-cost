@@ -9,7 +9,14 @@ if env_path.exists():
 
 ENV = os.getenv("ENV", "dev")
 
-if ENV == "prod":
-    DATABASE_URL = os.getenv("DATABASE_URL_PROD")
-else:
-    DATABASE_URL = os.getenv("DATABASE_URL_LOCAL")
+DATABASES = {
+    "prod": os.getenv("DATABASE_URL_PROD"),
+    "dev": os.getenv("DATABASE_URL_LOCAL"),
+    "test": os.getenv("DATABASE_URL_TEST"),
+}
+
+DATABASE_URL = DATABASES.get(ENV)
+
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///:memory:"
+    print(f"DATABASE_URL not set, using fallback: {DATABASE_URL}")
