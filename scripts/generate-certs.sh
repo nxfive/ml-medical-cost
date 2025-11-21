@@ -22,7 +22,7 @@ fi
 echo "Generating server key/cert for postgres-${SERVICE}..."
 
 openssl genrsa -out server/server.key 2048
-openssl req -new -key server/server.key -out server/server.csr -subj "/CN=postgres-${SERVICE}"
+openssl req -new -key server/server.key -out server/server.csr -subj "/CN=ml-medical-cost_postgres-${SERVICE}"
 openssl x509 -req -in server/server.csr -CA ca.crt -CAkey "$CA_KEY" -CAcreateserial -out server/server.crt -days "$DAYS" -sha256
 
 rm -f server/server.csr
