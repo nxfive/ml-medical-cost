@@ -24,7 +24,4 @@ COPY --from=builder /usr/local/bin/mlflow /usr/local/bin/mlflow
 COPY --from=builder /mlflow/entrypoint.sh ./
 RUN chmod +x /mlflow/entrypoint.sh
 
-RUN useradd -m user
-USER user
-
 ENTRYPOINT ["/mlflow/entrypoint.sh"]
