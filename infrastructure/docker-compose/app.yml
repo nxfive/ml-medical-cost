@@ -26,7 +26,7 @@ services:
       - "traefik.http.middlewares.frontend-ratelimit.ratelimit.average=200"
       - "traefik.http.middlewares.frontend-ratelimit.ratelimit.burst=100"
       - "traefik.http.routers.frontend.middlewares=frontend-ratelimit"
-      - "traefik.http.services.frontend.loadbalancer.server.port=8501"
+      - "traefik.http.services.ml-medical-cost_frontend.loadbalancer.server.port=8501"
     networks:
       - traefik-net
       - internal-net
