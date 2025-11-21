@@ -91,23 +91,23 @@ volumes:
 
   pg-certs-backend-server:
     external: true
-    name: config_pg-certs-backend-server
+    name: ml-medical-cost_pg-certs-backend-server
   pg-certs-backend-client:
     external: true
-    name: config_pg-certs-backend-client
+    name: ml-medical-cost_pg-certs-backend-client
   pg-certs-backend-pgadmin:
     external: true
-    name: config_pg-certs-backend-pgadmin
+    name: ml-medical-cost_pg-certs-backend-pgadmin
 
   pg-certs-mlflow-server:
     external: true
-    name: config_pg-certs-mlflow-server
+    name: ml-medical-cost_pg-certs-mlflow-server
   pg-certs-mlflow-client:
     external: true
-    name: config_pg-certs-mlflow-client
+    name: ml-medical-cost_pg-certs-mlflow-client
   pg-certs-mlflow-pgadmin:
     external: true
-    name: config_pg-certs-mlflow-pgadmin
+    name: ml-medical-cost_pg-certs-mlflow-pgadmin
 
 
 networks:
