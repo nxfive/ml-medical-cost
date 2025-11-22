@@ -35,7 +35,7 @@ services:
 volumes:
   pg-certs-backend-client:
     external: true
-    name: config_pg-certs-backend-client
+    name: ml-medical-cost_pg-certs-backend-client
 
 networks:
   traefik-net:
