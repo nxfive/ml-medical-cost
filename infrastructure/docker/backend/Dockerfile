@@ -47,9 +47,6 @@ COPY --from=builder /backend/entrypoint.sh ./
 
 RUN chmod +x /backend/entrypoint.sh
 
-RUN useradd -m user
-USER user
-
 ENV VIRTUAL_ENV="/backend/.venv"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV ENV="prod"
