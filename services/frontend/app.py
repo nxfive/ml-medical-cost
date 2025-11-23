@@ -16,22 +16,20 @@ sex = st.selectbox("Sex", ["Male", "Female"])
 region = st.selectbox("Region", ["Southwest", "Southeast", "Northwest", "Northeast"])
 
 input_data = {
-    "medical_features": {
-        "age": age,
-        "bmi": bmi,
-        "children": children,
-        "smoker": smoker,
-        "sex": sex,
-        "region": region,
-    }
+    "age": age,
+    "bmi": bmi,
+    "children": children,
+    "smoker": smoker,
+    "sex": sex,
+    "region": region,
 }
 
-bento_host = os.getenv("BENTO_HOST", "127.0.0.1")
-bento_port = os.getenv("BENTO_PORT", "3000")
+backend_host = os.getenv("BACKEND_HOST", "127.0.0.1")
+backend_port = os.getenv("BACKEND_PORT", "3000")
 
 if st.button("Predict Medical Cost"):
     response = requests.post(
-        f"http://{bento_host}:{bento_port}/predict", json=input_data
+        f"http://{backend_host}:{backend_port}/predict", json=input_data
     )
     if response.status_code == 200:
         result = response.json()
