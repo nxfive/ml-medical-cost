@@ -18,7 +18,7 @@ RUN apt-get update && \
 COPY pyproject.toml uv.lock alembic.ini ./
 COPY alembic ./alembic
 COPY database ./database
-COPY services/backend/ ./server/
+COPY services/backend/fastapi ./server/
 COPY src ./src/
 COPY scripts/back-entrypoint.sh ./entrypoint.sh
 
