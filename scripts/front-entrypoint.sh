@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-BENTO_PORT=$(cat /run/secrets/BACKEND_PORT)
+export BACKEND_PORT=$(cat /run/secrets/BACKEND_PORT)
 
 echo "Waiting for server..."
 
-while ! curl -s http://$BENTO_HOST:$BENTO_PORT > /dev/null; do
+while ! curl -s http://$BACKEND_HOST:$BACKEND_PORT > /dev/null; do
   sleep 2
 done
 
