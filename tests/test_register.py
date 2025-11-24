@@ -2,7 +2,7 @@ from unittest import mock
 
 import pytest
 
-from services.backend.bento import get_model_version, register_bento_model
+from services.backend.bento.register import get_model_version, register_bento_model
 
 
 def test_get_model_version_loads_latest(monkeypatch):
@@ -13,11 +13,11 @@ def test_get_model_version_loads_latest(monkeypatch):
         mock.Mock(version="2"),
     ]
 
-    monkeypatch.setattr("services.backend.bento.MlflowClient", lambda: mock_client)
+    monkeypatch.setattr("services.backend.bento.register.MlflowClient", lambda: mock_client)
 
     mock_mlflow = mock.Mock()
     mock_mlflow.sklearn.load_model.return_value = "fake_model"
-    monkeypatch.setattr("services.backend.bento.mlflow", mock_mlflow)
+    monkeypatch.setattr("services.backend.bento.register.mlflow", mock_mlflow)
 
     result = get_model_version("MyModel")
 
@@ -28,7 +28,7 @@ def test_get_model_version_loads_latest(monkeypatch):
 def test_get_model_version_no_versions(monkeypatch):
     mock_client = mock.Mock()
     mock_client.search_model_versions.return_value = []
-    monkeypatch.setattr("services.backend.bento.MlflowClient", lambda: mock_client)
+    monkeypatch.setattr("services.backend.bento.register.MlflowClient", lambda: mock_client)
 
     with pytest.raises(ValueError, match="No versions found for model MyModel"):
         get_model_version("MyModel")
@@ -36,11 +36,11 @@ def test_get_model_version_no_versions(monkeypatch):
 
 def test_register_bento_model(capsys):
     with (
-        mock.patch("services.backend.bento.datetime") as mock_datetime,
+        mock.patch("services.backend.bento.register.datetime") as mock_datetime,
         mock.patch(
-            "services.backend.bento.get_model_version", return_value="fake_model"
+            "services.backend.bento.register.get_model_version", return_value="fake_model"
         ) as mock_get_model_version,
-        mock.patch("services.backend.bento.bentoml") as mock_bentoml,
+        mock.patch("services.backend.bento.register.bentoml") as mock_bentoml,
     ):
 
         mock_now = mock.Mock()
