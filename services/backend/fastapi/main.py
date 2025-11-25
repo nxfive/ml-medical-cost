@@ -11,8 +11,8 @@ from .schemas import MedicalCostFeatures
 
 app = FastAPI()
 
-bento_host = os.getenv("BENTO_HOST", "127.0.0.1")
-bento_port = os.getenv("BENTO_PORT", 3000)
+bento_host = os.getenv("BENTO_HOST") or "127.0.0.1"
+bento_port = os.getenv("BENTO_PORT") or 3000
 
 ps = PredictService(bento_url=f"http://{bento_host}:{bento_port}")
 
