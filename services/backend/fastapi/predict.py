@@ -24,7 +24,7 @@ class PredictService:
         prediction = response.json()["charges"]
 
         database = Database(db)
-        database.create_record(data=payload, predicted_charge=prediction)
+        database.create_record(data=payload, prediction=prediction)
         return prediction
 
     def predict_many(self, db: Session, features_list: list[MedicalCostFeatures]) -> list[float]:
