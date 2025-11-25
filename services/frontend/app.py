@@ -19,9 +19,9 @@ input_data = {
     "age": age,
     "bmi": bmi,
     "children": children,
-    "smoker": smoker,
-    "sex": sex,
-    "region": region,
+    "smoker": smoker.lower(),
+    "sex": sex.lower(),
+    "region": region.lower(),
 }
 
 backend_host = os.getenv("BACKEND_HOST", "127.0.0.1")
