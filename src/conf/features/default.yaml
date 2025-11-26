@@ -1,0 +1,3 @@
+categorical: ["children", "region"]
+numeric: ["age", "bmi"]
+binary: ["sex", "smoker"]

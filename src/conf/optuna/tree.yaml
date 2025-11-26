@@ -1,0 +1,10 @@
+params:
+  max_depth:
+    min: 2
+    max: 15
+  min_samples_split:
+    min: 2
+    max: 10
+  min_samples_leaf:
+    min: 2
+    max: 10

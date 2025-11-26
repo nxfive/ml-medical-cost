@@ -1,0 +1,9 @@
+log:
+  params: {}
+
+none:
+  params: {}
+
+quantile:
+  params: 
+    n_quantiles: [100, 150, 200]

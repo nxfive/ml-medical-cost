@@ -1,0 +1,48 @@
+defaults:
+  - default
+
+linear:
+  params: {}
+knn:
+  params:
+    n_neighbors:
+      min: 3
+      max: 10
+      step: 1
+    leaf_size:
+      min: 10
+      max: 40
+      step: 5
+    p:
+      - 1
+      - 2
+    weights:
+      choices: 
+        - uniform
+        - distance
+rf:
+  params:
+    n_estimators:
+      min: 50
+      max: 150
+      step: 10
+    max_depth:
+      min: 2
+      max: 15
+    min_samples_split:
+      min: 2
+      max: 10
+    min_samples_leaf:
+      min: 2
+      max: 10
+tree:
+  params:
+    max_depth:
+      min: 2
+      max: 15
+    min_samples_split:
+      min: 2
+      max: 10
+    min_samples_leaf:
+      min: 2
+      max: 10

@@ -1,0 +1,9 @@
+name: rf
+preprocess_num_features: false
+target_transformations: false
+
+params:
+  n_estimators: [25, 40, 50, 60]
+  max_depth: [3, 5, 7, 10]
+  min_samples_split: [12, 16, 20, 24]
+  min_samples_leaf: [6, 8, 10, 12]

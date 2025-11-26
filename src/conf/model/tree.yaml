@@ -1,0 +1,8 @@
+name: tree
+preprocess_num_features: false
+target_transformations: false
+
+params:
+  max_depth: [2, 5, 7]
+  min_samples_split: [2, 5, 10]
+  min_samples_leaf: [2, 5, 10]

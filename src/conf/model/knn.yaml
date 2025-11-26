@@ -1,0 +1,9 @@
+name: knn
+preprocess_num_features: true
+target_transformations: true
+
+params:
+  n_neighbors: [3, 5, 7]
+  weights: [uniform, distance]
+  leaf_size: [20, 30, 40]
+  p: [1, 2]

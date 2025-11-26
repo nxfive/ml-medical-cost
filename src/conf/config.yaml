@@ -1,0 +1,22 @@
+defaults:
+  - _self_
+  - features: default
+  - model: linear
+  - cv: default
+  - transform: default
+  - optuna: all
+
+project_name: ml-medical-cost
+
+stage: training
+
+data:
+  root_dir: "data"
+  raw_dir: "${data.root_dir}/raw"
+  processed_dir: "${data.root_dir}/processed"
+
+training:
+  output_dir: "src/training/results"
+
+models:
+  output_dir: "models"
