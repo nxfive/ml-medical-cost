@@ -1,17 +1,15 @@
-import os
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Sequence
 
 import joblib
 import numpy as np
 import pandas as pd
 import yaml
+from omegaconf import DictConfig
 from sklearn.metrics import (mean_absolute_error, r2_score,
                              root_mean_squared_error)
 from sklearn.model_selection import KFold
-
-from src.models.settings import pipeline_config
-from src.utils.paths import MODELS_DIR
 
 
 def update_param_grid(param_grid: dict, step_name: str) -> dict:
@@ -26,12 +24,12 @@ def update_param_grid(param_grid: dict, step_name: str) -> dict:
     return param_grid
 
 
-def prepare_grid(model: type) -> dict:
+def prepare_grid(cfg: DictConfig) -> dict:
     """
     Prepares param_grid for GridSearchCV with 'model' prefixes.
     """
-    param_grid = {}
-    model_params = pipeline_config.models[model.__name__].params
+    param_grid: dict[str, list] = {}
+    model_params = {k: list(v) for k, v in cfg.model.params.items()}
 
     if model_params:
         param_grid = update_param_grid(model_params, "model")
@@ -39,14 +37,14 @@ def prepare_grid(model: type) -> dict:
     return param_grid
 
 
-def get_cv() -> KFold:
+def get_cv(cfg: DictConfig) -> KFold:
     """
-    Returns a KFold cross-validator configured based on the values from pipeline_config.
+    Returns a KFold cross-validator configured based on the values from config.
     """
     return KFold(
-        n_splits=pipeline_config.cv["n_splits"], 
-        shuffle=pipeline_config.cv["shuffle"], 
-        random_state=pipeline_config.cv["random_state"]
+        n_splits=cfg.cv.n_splits,
+        shuffle=cfg.cv.shuffle,
+        random_state=cfg.cv.random_state,
     )
 
 
@@ -78,20 +76,22 @@ def check_fold_stability(folds_scores: Sequence[float], threshold: float = 0.1) 
     max_score = max(folds_scores)
     min_score = min(folds_scores)
     difference = max_score - min_score
-    
+
     print(f"Fold scores: {folds_scores}, max-min difference: {difference:.3f}")
-    
+
     return difference <= threshold
 
 
 def check_overfitting(train_r2: float, test_r2: float, threshold: float = 0.2) -> bool:
     """
-    Checks whether a model is likely overfitting based on the difference between 
+    Checks whether a model is likely overfitting based on the difference between
     training and test R² scores.
     """
     difference = train_r2 - test_r2
 
-    print(f"Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, Difference: {difference:.3f}")
+    print(
+        f"Train R²: {train_r2:.3f}, Test R²: {test_r2:.3f}, Difference: {difference:.3f}"
+    )
 
     return difference > threshold
 
@@ -155,27 +155,31 @@ def save_model_with_metadata(
     model_name: str,
     metrics: dict[str, float],
     params: dict[str, float | int],
+    cfg: DictConfig,
 ):
     """
     Save model and corresponding metadata to disk.
     """
     file_name = model_name.lower()
-    model_path = os.path.join(MODELS_DIR, f"{file_name}.pkl")
-    joblib.dump(model, model_path)
+    models_path = Path(cfg.models.output_dir)
+    metadata_path = models_path / "metadata"
+
+    metadata_path.mkdir(parents=True, exist_ok=True)
+
+    joblib.dump(model, models_path / f"{file_name}.pkl")
 
     metadata = {
         "model_name": model_name,
         "version": "1.0",
         "date_trained": datetime.today().strftime("%Y-%m-%d"),
         "features_processed": {
-            "cat_features": pipeline_config.features.categorical,
-            "num_features": pipeline_config.features.numeric,
-            "bin_features": pipeline_config.features.binary,
+            "cat_features": list(cfg.features.categorical),
+            "num_features": list(cfg.features.numeric),
+            "bin_features": list(cfg.features.binary),
         },
         "params": params or {},
-        "metrics": metrics
+        "metrics": metrics,
     }
 
-    metadata_path = os.path.join(MODELS_DIR, "metadata", f"{file_name}.yml")
-    with open(metadata_path, "w") as f:
+    with open(metadata_path / f"{file_name}.yml", "w") as f:
         yaml.safe_dump(metadata, f)
