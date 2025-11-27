@@ -2,12 +2,11 @@ import numpy as np
 import pandas as pd
 import optuna
 from typing import Any
-from sklearn.model_selection import KFold
 
 from src.models.models import create_model_pipeline
-from src.models.settings import OptunaConfig
-from src.models.utils import get_cv
-from src.utils.paths import OPTUNA_CONFIG_FILE
+from src.utils.utils import get_cv
+
+from omegaconf import DictConfig
 
 
 def objective(
@@ -15,14 +14,15 @@ def objective(
     X_train: pd.DataFrame,
     y_train: pd.Series,
     model: type,
-    optuna_params: dict[str, Any],
-    cv: KFold,
+    optuna_params: dict,
+    cfg: DictConfig
 ) -> float:
     """
     Generic Optuna objective for any scikit-learn model.
     Supports int, float, and categorical parameters in YAML.
     """
     trial_params: dict[str, Any] = {}
+    cv = get_cv(cfg)
 
     for param_name, param_config in optuna_params.items():
         if isinstance(param_config, list):
@@ -61,7 +61,7 @@ def objective(
     else:
         model_instance = model(**trial_params)
 
-    pipeline = create_model_pipeline(model_instance=model_instance)
+    pipeline = create_model_pipeline(cfg, model_instance=model_instance)
 
     r2_scores = []
 
@@ -81,18 +81,18 @@ def objective(
 
 
 def optimize_model(
-    model: type, X_train: pd.DataFrame, y_train: pd.Series
+    model: type, X_train: pd.DataFrame, y_train: pd.Series, cfg: DictConfig
 ) -> tuple[optuna.Study, dict] | None:
     """
     Performs hyperparameter optimization for a given model using Optuna.
     """
-    optuna_config = OptunaConfig(OPTUNA_CONFIG_FILE, model)
+    params_node = cfg.optuna.get(cfg.model.name, {})
 
-    if not optuna_config.params:
+    if not params_node:
         print(f"No Optuna parameters defined for {model.__name__}, skipping optimization.")
         return None
 
-    cv = get_cv()
+    optuna_params = {k: dict(v) for k, v in params_node["params"].items()}
 
     study = optuna.create_study(
         study_name="MedicalRegressor",
@@ -102,9 +102,9 @@ def optimize_model(
 
     study.optimize(
         lambda trial: objective(
-            trial, X_train, y_train, model, optuna_config.params, cv
+            trial, X_train, y_train, model, optuna_params, cfg
         ),
-        n_trials=optuna_config.trials,
+        n_trials=cfg.optuna.trials,
     )
 
     best_params = study.best_params
