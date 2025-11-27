@@ -7,11 +7,16 @@ import numpy as np
 import pandas as pd
 import yaml
 from omegaconf import DictConfig
+from sklearn.base import BaseEstimator
 from sklearn.compose import TransformedTargetRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import (mean_absolute_error, r2_score,
                              root_mean_squared_error)
 from sklearn.model_selection import KFold
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import Pipeline
+from sklearn.tree import DecisionTreeRegressor
 
 
 def update_param_grid(param_grid: dict, step_name: str) -> dict:
@@ -246,3 +251,20 @@ def pick_best(
     metrics = yaml.safe_load((best_run / "metrics.yaml").read_text())
 
     return pipeline, metrics
+
+
+def get_model_class_and_short(name: str) -> tuple[type[BaseEstimator], str]:
+    """
+    Returns the scikit-learn model class and its short alias based on the model name.
+    """
+    models_mapping = {
+        "RandomForestRegressor": (RandomForestRegressor, "rf"),
+        "LinearRegression": (LinearRegression, "linear"),
+        "DecisionTreeRegressor": (DecisionTreeRegressor, "tree"),
+        "KNeighborsRegressor": (KNeighborsRegressor, "knn"),
+    }
+
+    if name in models_mapping:
+        return models_mapping[name]
+    else:
+        raise ValueError(f"Model '{name}' not found in models_mapping")
