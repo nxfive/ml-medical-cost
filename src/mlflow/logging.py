@@ -43,7 +43,7 @@ def log_model(
     """
     uuid_id = uuid.uuid4().hex[:6]
     run_name = f"{model.__name__}-{uuid_id}"
-    with mlflow.start_run(run_name=run_name) as run:
+    with mlflow.start_run(run_name=run_name):
         if param_grid:
             for param, value in param_grid.items():
                 mlflow.log_param(param, value)
