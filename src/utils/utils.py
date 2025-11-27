@@ -7,9 +7,11 @@ import numpy as np
 import pandas as pd
 import yaml
 from omegaconf import DictConfig
+from sklearn.compose import TransformedTargetRegressor
 from sklearn.metrics import (mean_absolute_error, r2_score,
                              root_mean_squared_error)
 from sklearn.model_selection import KFold
+from sklearn.pipeline import Pipeline
 
 
 def update_param_grid(param_grid: dict, step_name: str) -> dict:
@@ -195,3 +197,22 @@ def load_splitted_data(cfg) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.S
     y_test = pd.read_parquet(Path(cfg.data.processed_dir) / "y_test.parquet").squeeze()
 
     return X_train, X_test, y_train, y_test
+
+
+def save_run(
+    results: dict, pipeline: Pipeline | TransformedTargetRegressor, cfg: DictConfig
+):
+    """
+    Saves the training run results and the trained pipeline to disk.
+    """
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    results_path = Path(cfg.training.output_dir) / timestamp
+    results_path.mkdir(parents=True, exist_ok=True)
+
+    metrics_path = results_path / "metrics.yaml"
+    with open(metrics_path, "w") as f:
+        yaml.safe_dump(results, f)
+
+    pipeline_path = results_path / "pipeline.pkl"
+    joblib.dump(pipeline, pipeline_path)
