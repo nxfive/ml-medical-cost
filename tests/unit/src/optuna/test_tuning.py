@@ -4,7 +4,7 @@ import pytest
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 
-from src.models.optuna_tuning import objective, optimize_model
+from src.optuna.tuning import objective, optimize_model
 
 
 @pytest.mark.parametrize(
