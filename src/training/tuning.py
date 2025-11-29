@@ -8,7 +8,8 @@ from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.pipeline import FunctionTransformer, Pipeline
 from sklearn.preprocessing import QuantileTransformer
 
-from src.utils.utils import get_cv, update_param_grid
+from src.utils.cv import get_cv
+from src.utils.grid import update_param_grid
 
 
 def perform_cross_validation(

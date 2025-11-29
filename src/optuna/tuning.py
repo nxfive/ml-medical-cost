@@ -1,12 +1,12 @@
-import numpy as np
-import pandas as pd
-import optuna
 from typing import Any
 
+import numpy as np
+import pandas as pd
+from omegaconf import DictConfig
+
+import optuna
 from src.models.models import create_model_pipeline
 from src.utils.utils import get_cv
-
-from omegaconf import DictConfig
 
 
 def objective(

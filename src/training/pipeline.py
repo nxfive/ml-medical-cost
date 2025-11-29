@@ -2,9 +2,11 @@ from omegaconf import DictConfig
 
 from src.mlflow.logging import log_model, setup_mlflow
 from src.training.train import run_training
-from src.utils.utils import (check_model_results, get_metrics,
-                             get_model_class_and_short, load_splitted_data,
-                             save_run)
+from src.utils.loading import load_splitted_data
+from src.utils.metrics import get_metrics
+from src.utils.saving import save_run
+from src.utils.selection import get_model_class_and_short
+from src.utils.validation import check_model_results
 
 
 def run(cfg: DictConfig) -> None:

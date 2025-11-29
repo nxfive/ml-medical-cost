@@ -2,10 +2,11 @@ from omegaconf import DictConfig
 
 from src.mlflow.logging import log_model, setup_mlflow
 from src.optuna.tuning import optimize_model
-from src.utils.utils import (get_metrics, get_model_class_and_short,
-                             load_splitted_data, pick_best,
-                             save_model_with_metadata,
-                             update_params_with_optuna)
+from src.utils.grid import update_params_with_optuna
+from src.utils.loading import load_splitted_data
+from src.utils.metrics import get_metrics
+from src.utils.saving import save_model_with_metadata
+from src.utils.selection import get_model_class_and_short, pick_best
 
 
 def run(cfg: DictConfig) -> None:

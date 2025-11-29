@@ -9,7 +9,7 @@ from sklearn.pipeline import Pipeline
 from src.models.models import create_model_pipeline
 from src.training.tuning import (evaluate_target_transformers,
                                  perform_cross_validation, perform_grid_search)
-from src.utils.utils import prepare_grid
+from src.utils.grid import prepare_grid
 
 PipelineResult = tuple[
     Pipeline | TransformedTargetRegressor,
