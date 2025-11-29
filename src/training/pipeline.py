@@ -1,67 +1,52 @@
-import pandas as pd
-from typing import Any
+from omegaconf import DictConfig
 
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LinearRegression
-
-from src.models.train import run_pipeline
-from src.models.utils import (
-    check_model_results,
-    get_metrics,
-)
-from src.models.mlflow_logging import log_model
+from src.mlflow.logging import log_model, setup_mlflow
+from src.training.train import run_training
+from src.utils.utils import (check_model_results, get_metrics,
+                             get_model_class_and_short, load_splitted_data,
+                             save_run)
 
 
-MODELS = [
-    LinearRegression,
-    KNeighborsRegressor,
-    DecisionTreeRegressor,
-    RandomForestRegressor,
-]
-
-
-def models_pipeline(
-    X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series
-) -> dict[str, Any]:
+def run(cfg: DictConfig) -> None:
     """
-    Trains and evaluates all defined models using cross-validation and logs results to MLflow.
+    Trains and evaluates all defined models using cross-validation, logs results to MLflow
+    and saves pipeline and training results to disk.
     """
-    models_results = []
+    setup_mlflow()
 
-    for model in MODELS:
-        for pipeline_results, param_grid, transformer_name in run_pipeline(
-            model, X_train, X_test, y_train
-        ):
-            estimator, fold_scores, folds_scores_mean, y_train_pred, y_test_pred = (
-                pipeline_results
-            )
+    X_train, X_test, y_train, y_test = load_splitted_data(cfg)
 
-            metrics = get_metrics(y_train, y_test, y_train_pred, y_test_pred)
-            check_model_results(model, metrics, fold_scores)
+    model_class, _ = get_model_class_and_short(cfg.model.name)
 
-            log_model(
-                estimator=estimator,
-                param_grid=param_grid,
-                X_train=X_train,
-                model=model,
-                metrics=metrics,
-                folds_scores=fold_scores,
-                folds_scores_mean=folds_scores_mean,
-                study=None,
-                transformer_name=transformer_name,
-            )
+    for pipeline_results, param_grid, transformer_name in run_training(
+        model_class, X_train, X_test, y_train, cfg
+    ):
+        estimator, fold_scores, folds_scores_mean, y_train_pred, y_test_pred = (
+            pipeline_results
+        )
 
-            models_results.append(
-                {
-                    "model": model,
-                    "estimator": estimator,
-                    "param_grid": param_grid,
-                    "transformer": transformer_name,
-                    "folds_scores_mean": folds_scores_mean,
-                    "metrics": metrics,
-                }
-            )
+        metrics = get_metrics(y_train, y_test, y_train_pred, y_test_pred)
+        check_model_results(model_class, metrics, fold_scores)
 
-    return max(models_results, key=lambda x: x["metrics"]["test_r2"])
+        log_model(
+            estimator=estimator,
+            param_grid=param_grid,
+            X_train=X_train,
+            model=model_class,
+            metrics=metrics,
+            folds_scores=fold_scores,
+            folds_scores_mean=folds_scores_mean,
+            study=None,
+            transformer_name=transformer_name,
+        )
+        save_run(
+            {
+                "model": model_class.__name__,
+                "param_grid": param_grid,
+                "transformer": transformer_name,
+                "folds_scores_mean": float(folds_scores_mean),
+                "metrics": metrics,
+            },
+            estimator,
+            cfg,
+        )
