@@ -1,29 +1,28 @@
-from src.main import main
-
+from types import SimpleNamespace
 from unittest import mock
 
+import pytest
+from omegaconf import OmegaConf
 
-def test_main():
+from src.main import run_stage
 
-    with (
-        mock.patch("src.main.setup_mlflow") as mock_mlflow,
-        mock.patch(
-            "src.main.data_pipeline",
-            return_value=("X_train", "X_test", "y_train", "y_test"),
-        ) as mock_data_pipeline,
-        mock.patch(
-            "src.main.models_pipeline", return_value="best_model_info"
-        ) as mock_models_pipeline,
-        mock.patch("src.main.optuna_pipeline") as mock_optuna_pipeline,
-    ):
 
-        main()
+def test_run_stage_calls_correct_module():
+    cfg = SimpleNamespace(stage="data") 
+    mock_run = mock.Mock()
 
-        mock_mlflow.assert_called_once()
-        mock_data_pipeline.assert_called_once()
-        mock_models_pipeline.assert_called_once_with(
-            "X_train", "X_test", "y_train", "y_test"
-        )
-        mock_optuna_pipeline.assert_called_once_with(
-            "best_model_info", "X_train", "X_test", "y_train", "y_test"
-        )
+    with mock.patch("builtins.__import__") as mock_import:
+        mock_module = mock.Mock(run=mock_run)
+        mock_import.return_value = mock_module
+
+        run_stage(cfg)
+
+        mock_import.assert_called_once_with("src.data.pipeline", fromlist=["run"])
+        mock_run.assert_called_once_with(cfg)
+
+
+def test_run_stage_raises_on_unknown_stage():
+    cfg = OmegaConf.create({"stage": "unknown"})
+    
+    with pytest.raises(ValueError):
+        run_stage(cfg)
