@@ -3,7 +3,7 @@ from unittest import mock
 import pandas as pd
 import pytest
 
-from src.models.train import run_pipeline
+from src.training.train import run_pipeline
 
 
 @pytest.mark.parametrize(
