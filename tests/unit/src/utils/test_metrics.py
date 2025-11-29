@@ -14,10 +14,10 @@ def test_get_metrics():
     y_test_pred = np.array([4.8, 5.5, 5.4])
 
     with (
-        mock.patch("src.utils.utils.mean_absolute_error", return_value=0.8) as mock_mae,
-        mock.patch("src.utils.utils.r2_score", return_value=0.5) as mock_r2,
+        mock.patch("src.utils.metrics.mean_absolute_error", return_value=0.8) as mock_mae,
+        mock.patch("src.utils.metrics.r2_score", return_value=0.5) as mock_r2,
         mock.patch(
-            "src.utils.utils.root_mean_squared_error", return_value=0.3
+            "src.utils.metrics.root_mean_squared_error", return_value=0.3
         ) as mock_rmse,
     ):
 
