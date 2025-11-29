@@ -1,6 +1,6 @@
 from unittest import mock
 
-from src.models.pipeline import MODELS, models_pipeline, optuna_pipeline
+from src.training.pipeline import MODELS, models_pipeline, optuna_pipeline
 
 
 def test_models_pipeline():
