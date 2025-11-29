@@ -4,21 +4,13 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LinearRegression
+from omegaconf import OmegaConf
 from sklearn.model_selection import KFold
 
-from src.utils.utils import (
-    check_fold_stability,
-    check_model_results,
-    check_overfitting,
-    get_cv,
-    get_metrics,
-    prepare_grid,
-    save_model_with_metadata,
-    update_param_grid,
-    update_params_with_optuna,
-)
+from src.utils.utils import (check_fold_stability, check_model_results,
+                             check_overfitting, get_cv, get_metrics,
+                             prepare_grid, save_model_with_metadata,
+                             update_param_grid, update_params_with_optuna)
 
 
 @pytest.mark.parametrize(
@@ -43,52 +35,59 @@ def test_update_param_grid(param_grid, step_name, results):
 
 
 @pytest.mark.parametrize(
-    ("model_name", "params_grid", "results"),
+    ("cfg_dict", "expected"),
     [
         (
-            "RandomForestRegressor",
-            {"n_estimators": [100, 150]},
-            {"model__n_estimators": [100, 150]},
+            {
+                "model": {
+                    "name": "rf",
+                    "params": {"n_estimators": [50, 100], "max_depth": [3, 7]},
+                },
+            },
+            {
+                "model__n_estimators": [50, 100],
+                "model__max_depth": [3, 7],
+            },
         ),
         (
-            "LinearRegression",
-            {"fit_intercept": [True, False]},
+            {
+                "model": {
+                    "name": "lr",
+                    "params": {"fit_intercept": [True, False]},
+                }
+            },
             {"model__fit_intercept": [True, False]},
         ),
-        ("RandomForestRegressor", {}, {}),
-        ("LinearRegression", None, {}),
+        (
+            {"model": {"name": "rf", "params": {}}},
+            {},
+        ),
+        (
+            {"model": {"name": "lr", "params": None}},
+            {},
+        ),
     ],
 )
-def test_prepare_grid(monkeypatch, model_name, params_grid, results):
-    class FakeModelConfig:
-        params = params_grid
+def test_prepare_grid(cfg_dict, expected):
+    cfg = OmegaConf.create(cfg_dict)
+    grid = prepare_grid(cfg)
 
-    class FakePipelineConfig:
-        models = {model_name: FakeModelConfig()}
+    for key in grid:
+        assert key.startswith("model__")
 
-    model_class = {
-        "RandomForestRegressor": RandomForestRegressor,
-        "LinearRegression": LinearRegression,
-    }[model_name]
-
-    monkeypatch.setattr("src.models.utils.pipeline_config", FakePipelineConfig())
-    updated_grid = prepare_grid(model_class)
-
-    assert updated_grid == results
+    assert grid == expected
 
 
 def test_get_cv():
-    fake_cv_config = {"n_splits": 10, "shuffle": True, "random_state": 42}
+    cfg_cv = OmegaConf.create(
+        {"cv": {"n_splits": 10, "shuffle": True, "random_state": 42}}
+    )
+    kfold_cv = get_cv(cfg_cv)
 
-    with mock.patch("src.models.utils.pipeline_config") as mock_config:
-        mock_config.cv = fake_cv_config
-
-        kfold_cv = get_cv()
-
-        assert isinstance(kfold_cv, KFold)
-        assert kfold_cv.get_n_splits() == 10
-        assert kfold_cv.shuffle is True
-        assert kfold_cv.random_state == 42
+    assert isinstance(kfold_cv, KFold)
+    assert kfold_cv.get_n_splits() == 10
+    assert kfold_cv.shuffle is True
+    assert kfold_cv.random_state == 42
 
 
 def test_get_metrics():
@@ -99,12 +98,10 @@ def test_get_metrics():
     y_test_pred = np.array([4.8, 5.5, 5.4])
 
     with (
+        mock.patch("src.utils.utils.mean_absolute_error", return_value=0.8) as mock_mae,
+        mock.patch("src.utils.utils.r2_score", return_value=0.5) as mock_r2,
         mock.patch(
-            "src.models.utils.mean_absolute_error", return_value=0.8
-        ) as mock_mae,
-        mock.patch("src.models.utils.r2_score", return_value=0.5) as mock_r2,
-        mock.patch(
-            "src.models.utils.root_mean_squared_error", return_value=0.3
+            "src.utils.utils.root_mean_squared_error", return_value=0.3
         ) as mock_rmse,
     ):
 
@@ -198,10 +195,10 @@ def test_check_model_results(
 ):
     with (
         mock.patch(
-            "src.models.utils.check_fold_stability", return_value=cfs_return_value
+            "src.utils.utils.check_fold_stability", return_value=cfs_return_value
         ) as mock_stable,
         mock.patch(
-            "src.models.utils.check_overfitting", return_value=co_return_value
+            "src.utils.utils.check_overfitting", return_value=co_return_value
         ) as mock_overfit,
     ):
         check_model_results(
@@ -268,40 +265,45 @@ def test_update_params_with_optuna(model_params, optuna_params, expected):
     assert results == expected
 
 
-def test_save_model_with_metadata(tmp_path):
+def test_save_model_with_metadata():
+    cfg = OmegaConf.create(
+        {
+            "models": {"output_dir": "/fake/path"},
+            "features": {
+                "categorical": ["sex", "region"],
+                "numeric": ["age", "bmi"],
+                "binary": ["smoker"],
+            },
+        }
+    )
+
     fake_model = mock.Mock()
     model_name = "RandomForestRegressor"
     metrics = {"test_r2": 0.85, "train_r2": 0.90}
     params = {"n_estimators": 100, "max_depth": 5}
 
     with (
-        mock.patch("src.models.utils.MODELS_DIR", tmp_path),
-        mock.patch("src.models.utils.joblib.dump") as mock_dump,
-        mock.patch("src.models.utils.yaml.safe_dump") as mock_yaml_dump,
-        mock.patch("src.models.utils.pipeline_config") as mock_pipeline_config,
+        mock.patch("src.utils.utils.joblib.dump") as mock_dump,
+        mock.patch("src.utils.utils.yaml.safe_dump") as mock_yaml_dump,
         mock.patch("builtins.open", mock.mock_open()) as mock_file,
-        mock.patch("src.models.utils.datetime") as mock_datetime,
+        mock.patch("src.utils.utils.datetime") as mock_datetime,
+        mock.patch("pathlib.Path.mkdir") as mock_mkdir,
     ):
         mock_datetime.today.return_value = datetime(2025, 11, 2)
 
-        mock_pipeline_config.features.categorical = ["sex", "region"]
-        mock_pipeline_config.features.numeric = ["age", "bmi"]
-        mock_pipeline_config.features.binary = ["smoker"]
+        save_model_with_metadata(fake_model, model_name, metrics, params, cfg)
 
-        save_model_with_metadata(fake_model, model_name, metrics, params)
+    mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+    mock_dump.assert_called_once_with(fake_model, mock.ANY)
+    mock_file.assert_called_once_with(mock.ANY, "w")
+    args, _ = mock_yaml_dump.call_args
+    metadata_written = args[0]
 
-        model_path = tmp_path / "randomforestregressor.pkl"
-        metadata_path = tmp_path / "metadata" / "randomforestregressor.yml"
-
-        mock_dump.assert_called_once_with(fake_model, str(model_path))
-        mock_file.assert_any_call(str(metadata_path), "w")
-
-        args, _ = mock_yaml_dump.call_args
-        metadata_written = args[0]
-
-        assert metadata_written["model_name"] == model_name
-        assert metadata_written["version"] == "1.0"
-        assert metadata_written["params"] == params
-        assert metadata_written["metrics"] == metrics
-        assert metadata_written["features_processed"]["num_features"] == ["age", "bmi"]
-        assert metadata_written["date_trained"] == "2025-11-02"
+    assert metadata_written["model_name"] == model_name
+    assert metadata_written["version"] == "1.0"
+    assert metadata_written["params"] == params
+    assert metadata_written["metrics"] == metrics
+    assert metadata_written["features_processed"]["num_features"] == ["age", "bmi"]
+    assert metadata_written["features_processed"]["cat_features"] == ["sex", "region"]
+    assert metadata_written["features_processed"]["bin_features"] == ["smoker"]
+    assert metadata_written["date_trained"] == "2025-11-02"
