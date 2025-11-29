@@ -10,6 +10,21 @@ from sklearn.compose import TransformedTargetRegressor
 from sklearn.pipeline import Pipeline
 
 
+def build_metadata(model_name: str, cfg: DictConfig, params: dict, metrics: dict) -> dict:
+    return {
+        "model_name": model_name,
+        "version": "1.0",
+        "date_trained": datetime.today().strftime("%Y-%m-%d"),
+        "features_processed": {
+            "cat_features": list(cfg.features.categorical),
+            "num_features": list(cfg.features.numeric),
+            "bin_features": list(cfg.features.binary),
+        },
+        "params": params or {},
+        "metrics": metrics,
+    }
+
+
 def save_metrics(metrics: dict, path: Path):
     """
     Save metrics dictionary to a YAML file on disk.
@@ -38,23 +53,10 @@ def save_model_with_metadata(
     file_name = model_name.lower()
     models_path = Path(cfg.models.output_dir)
     metadata_path = models_path / "metadata"
-
     metadata_path.mkdir(parents=True, exist_ok=True)
-
+    
+    metadata = build_metadata(model.__name__, cfg, params, metrics)
     save_model(model, models_path / f"{file_name}.pkl")
-
-    metadata = {
-        "model_name": model_name,
-        "version": "1.0",
-        "date_trained": datetime.today().strftime("%Y-%m-%d"),
-        "features_processed": {
-            "cat_features": list(cfg.features.categorical),
-            "num_features": list(cfg.features.numeric),
-            "bin_features": list(cfg.features.binary),
-        },
-        "params": params or {},
-        "metrics": metrics,
-    }
     save_metrics(metadata, metadata_path / f"{file_name}.yml")
 
 
