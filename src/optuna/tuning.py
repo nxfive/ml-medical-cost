@@ -105,6 +105,26 @@ def objective(
     return _evaluate_pipeline(pipeline, X_train, y_train, cv, trial)
 
 
+def create_study(study_name: str = "MedicalRegressor") -> optuna.Study:
+    """
+    Creates and returns an Optuna study with a MedianPruner and maximize direction.
+    """
+    return optuna.create_study(
+        study_name=study_name,
+        direction="maximize",
+        pruner=optuna.pruners.MedianPruner(),
+    )
+
+
+def run_study(
+    study: optuna.Study, objective_fn, n_trials: int) -> dict[str, Any]:
+    """
+    Run the Optuna study with the given objective function and number of trials.
+    """
+    study.optimize(objective_fn, n_trials=n_trials)
+    return study.best_params
+
+
 def optimize_model(
     model: type, X_train: pd.DataFrame, y_train: pd.Series, cfg: DictConfig
 ) -> tuple[optuna.Study, dict] | None:
@@ -119,17 +139,11 @@ def optimize_model(
 
     optuna_params = {k: dict(v) for k, v in params_node["params"].items()}
 
-    study = optuna.create_study(
-        study_name="MedicalRegressor",
-        direction="maximize",
-        pruner=optuna.pruners.MedianPruner(),
-    )
-
-    study.optimize(
-        lambda trial: objective(
-            trial, X_train, y_train, model, optuna_params, cfg
-        ),
-        n_trials=cfg.optuna.trials,
+    study = create_study()
+    best_params = run_study(
+        study,
+        lambda trial: objective(trial, X_train, y_train, model, optuna_params, cfg),
+        n_trials=cfg.optuna.trials
     )
 
     best_params = study.best_params
