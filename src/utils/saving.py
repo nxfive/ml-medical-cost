@@ -5,8 +5,24 @@ from typing import Any
 import joblib
 import yaml
 from omegaconf import DictConfig
+from sklearn.base import BaseEstimator
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.pipeline import Pipeline
+
+
+def save_metrics(metrics: dict, path: Path):
+    """
+    Save metrics dictionary to a YAML file on disk.
+    """
+    with open(path, "w") as f:
+        yaml.safe_dump(metrics, f)
+
+
+def save_model(model: BaseEstimator, path: Path):
+    """
+    Save any scikit-learn estimator or pipeline to disk.
+    """
+    joblib.dump(model, path)
 
 
 def save_model_with_metadata(
@@ -25,7 +41,7 @@ def save_model_with_metadata(
 
     metadata_path.mkdir(parents=True, exist_ok=True)
 
-    joblib.dump(model, models_path / f"{file_name}.pkl")
+    save_model(model, models_path / f"{file_name}.pkl")
 
     metadata = {
         "model_name": model_name,
@@ -39,9 +55,7 @@ def save_model_with_metadata(
         "params": params or {},
         "metrics": metrics,
     }
-
-    with open(metadata_path / f"{file_name}.yml", "w") as f:
-        yaml.safe_dump(metadata, f)
+    save_metrics(metadata, metadata_path / f"{file_name}.yml")
 
 
 def save_run(
@@ -55,9 +69,5 @@ def save_run(
     results_path = Path(cfg.training.output_dir) / timestamp
     results_path.mkdir(parents=True, exist_ok=True)
 
-    metrics_path = results_path / "metrics.yaml"
-    with open(metrics_path, "w") as f:
-        yaml.safe_dump(results, f)
-
-    pipeline_path = results_path / "pipeline.pkl"
-    joblib.dump(pipeline, pipeline_path)
+    save_metrics(results, results_path / "metrics.yaml")
+    save_model(pipeline, results_path / "pipeline.pkl")
