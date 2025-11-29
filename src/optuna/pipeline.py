@@ -1,49 +1,34 @@
-import pandas as pd
-from typing import Any
+from omegaconf import DictConfig
 
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LinearRegression
-
-from src.models.utils import (
-    get_metrics,
-    update_params_with_optuna,
-    save_model_with_metadata,
-)
-from src.models.mlflow_logging import log_model
-from src.models.optuna_tuning import optimize_model
+from src.mlflow.logging import log_model, setup_mlflow
+from src.optuna.tuning import optimize_model
+from src.utils.utils import (get_metrics, get_model_class_and_short,
+                             load_splitted_data, pick_best,
+                             save_model_with_metadata,
+                             update_params_with_optuna)
 
 
-MODELS = [
-    LinearRegression,
-    KNeighborsRegressor,
-    DecisionTreeRegressor,
-    RandomForestRegressor,
-]
-
-
-def optuna_pipeline(
-    best_model_info: dict[str, Any],
-    X_train: pd.DataFrame,
-    X_test: pd.DataFrame,
-    y_train: pd.Series,
-    y_test: pd.Series,
-) -> None:
+def run(cfg: DictConfig) -> None:
     """
     Optimizes hyperparameters for the best-performing model using Optuna, retrains it,
     and logs the final version to MLflow.
     """
-    if (
-        optuna_results := optimize_model(best_model_info["model"], X_train, y_train)
-    ) is not None:
+    setup_mlflow()
+    X_train, X_test, y_train, y_test = load_splitted_data(cfg)
+
+    estimator, data = pick_best(cfg.training.output_dir)
+
+    model_class, short = get_model_class_and_short(data["model"])
+    cfg.model.name = short
+
+    if (optuna_results := optimize_model(model_class, X_train, y_train, cfg)) is not None:
         study, best_params = optuna_results
 
         updated_params = update_params_with_optuna(
-            best_model_info["param_grid"], optuna_params=best_params
+            data["param_grid"], optuna_params=best_params
         )
 
-        best_estimator = best_model_info["estimator"]
+        best_estimator = estimator
         best_estimator.set_params(**updated_params)
         best_estimator.fit(X_train, y_train)
         y_test_pred = best_estimator.predict(X_test)
@@ -55,14 +40,14 @@ def optuna_pipeline(
             estimator=best_estimator,
             param_grid=updated_params,
             X_train=X_train,
-            model=best_model_info["model"],
+            model=model_class,
             metrics=metrics,
             folds_scores=None,
             folds_scores_mean=None,
             study=study,
-            transformer_name=best_model_info["transformer"],
+            transformer_name=data["transformer"],
         )
 
         save_model_with_metadata(
-            best_estimator, best_model_info["model"].__name__, metrics, updated_params
+            best_estimator, model_class.__name__, metrics, updated_params, cfg
         )
