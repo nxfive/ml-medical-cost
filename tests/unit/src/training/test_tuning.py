@@ -6,7 +6,7 @@ import pytest
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.pipeline import Pipeline
 
-from src.models.tuning import (
+from src.training.tuning import (
     evaluate_target_transformers,
     perform_cross_validation,
     perform_grid_search,
