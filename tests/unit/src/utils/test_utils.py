@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import KFold
 
-from src.models.utils import (
+from src.utils.utils import (
     check_fold_stability,
     check_model_results,
     check_overfitting,
