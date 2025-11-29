@@ -1,16 +1,21 @@
-from src.data.pipeline import data_pipeline
-from src.models.pipeline import models_pipeline, optuna_pipeline
-from src.models.mlflow_logging import setup_mlflow
+import hydra
+from omegaconf import DictConfig
 
 
-def main():
-    setup_mlflow()
+STAGE_MODULES = {
+    "data": "src.data.pipeline",
+    "training": "src.training.pipeline",
+    "optuna": "src.optuna.pipeline",
+}
 
-    X_train, X_test, y_train, y_test = data_pipeline()
+@hydra.main(version_base=None, config_path="conf", config_name="config")
+def main(cfg: DictConfig):
+    stage = cfg.stage
+    if stage not in STAGE_MODULES:
+        raise ValueError(f"Stage '{stage}' unknown. Available: {list(STAGE_MODULES.keys())}")
 
-    best_model_info = models_pipeline(X_train, X_test, y_train, y_test)
-
-    optuna_pipeline(best_model_info, X_train, X_test, y_train, y_test)
+    module = __import__(STAGE_MODULES[stage], fromlist=["run"])
+    module.run(cfg)
 
 
 if __name__ == "__main__":
