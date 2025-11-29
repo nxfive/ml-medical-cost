@@ -3,7 +3,7 @@ from unittest import mock
 import numpy as np
 import pytest
 
-from src.models.mlflow_logging import log_model, setup_mlflow
+from src.mlflow.logging import log_model, setup_mlflow
 
 
 @pytest.mark.parametrize(
