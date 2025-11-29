@@ -5,24 +5,16 @@ import pandas as pd
 from omegaconf import DictConfig
 
 import optuna
+from sklearn.base import BaseEstimator
 from src.models.models import create_model_pipeline
-from src.utils.utils import get_cv
+from src.utils.cv import get_cv
 
 
-def objective(
-    trial: optuna.Trial,
-    X_train: pd.DataFrame,
-    y_train: pd.Series,
-    model: type,
-    optuna_params: dict,
-    cfg: DictConfig
-) -> float:
+def _build_trial_params(trial: optuna.Trial, optuna_params: dict) -> dict[str, Any]:
     """
-    Generic Optuna objective for any scikit-learn model.
-    Supports int, float, and categorical parameters in YAML.
+    Convert Optuna parameter definitions into trial parameters.
     """
     trial_params: dict[str, Any] = {}
-    cv = get_cv(cfg)
 
     for param_name, param_config in optuna_params.items():
         if isinstance(param_config, list):
@@ -36,7 +28,6 @@ def objective(
                 )
             elif all(k in param_config for k in ("min", "max")):
                 step = param_config.get("step")
-
                 if isinstance(param_config["min"], int) and isinstance(param_config["max"], int):
                     trial_params[param_name] = trial.suggest_int(
                         param_name,
@@ -56,13 +47,29 @@ def objective(
         else:
             raise ValueError(f"Unexpected param type for '{param_name}': {type(param_config)}")
 
-    if "random_state" in model.__init__.__code__.co_varnames:
-        model_instance = model(**trial_params, random_state=42)
-    else:
-        model_instance = model(**trial_params)
+    return trial_params
 
-    pipeline = create_model_pipeline(cfg, model_instance=model_instance)
 
+def _instantiate_model(model_class: type, trial_params: dict[str, Any]) -> BaseEstimator:
+    """
+    Instantiate the model with trial parameters, using a fixed random_state 
+    if the model supports a `random_state` parameter.
+    """
+    if "random_state" in model_class.__init__.__code__.co_varnames:
+        return model_class(**trial_params, random_state=42)
+    return model_class(**trial_params)
+
+
+def _evaluate_pipeline(
+    pipeline: BaseEstimator,
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    cv,
+    trial: optuna.Trial
+) -> float:
+    """
+    Fit the pipeline on CV folds, report intermediate metrics to Optuna, and return mean R2.
+    """
     r2_scores = []
 
     for step, (train_idx, val_idx) in enumerate(cv.split(X_train, y_train)):
@@ -78,6 +85,24 @@ def objective(
             raise optuna.exceptions.TrialPruned()
 
     return np.mean(r2_scores)
+
+
+def objective(
+    trial: optuna.Trial,
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    model: type,
+    optuna_params: dict,
+    cfg: DictConfig
+) -> float:
+    """
+    Generic Optuna objective function for scikit-learn models.
+    """
+    trial_params = _build_trial_params(trial, optuna_params)
+    model_instance = _instantiate_model(model, trial_params)
+    pipeline = create_model_pipeline(cfg, model_instance=model_instance)
+    cv = get_cv(cfg)
+    return _evaluate_pipeline(pipeline, X_train, y_train, cv, trial)
 
 
 def optimize_model(
