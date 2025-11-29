@@ -10,10 +10,8 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from src.models.models import create_model_pipeline, get_preprocessor
 
 
-def test_get_preprocessor_num_true(monkeypatch, pipeline_config_lr):
-    monkeypatch.setattr("src.models.models.pipeline_config", pipeline_config_lr)
-
-    preprocessor = get_preprocessor(LinearRegression)
+def test_get_preprocessor_num_true(cfg_models_process_num):
+    preprocessor = get_preprocessor(LinearRegression, cfg_models_process_num)
     assert isinstance(preprocessor, ColumnTransformer)
 
     transformers = {
@@ -25,46 +23,45 @@ def test_get_preprocessor_num_true(monkeypatch, pipeline_config_lr):
     assert isinstance(transformers["cat"], OneHotEncoder)
 
 
-def test_get_preprocessor_num_false(monkeypatch, pipeline_config_rf):
-    
-    pipline_config = pipeline_config_rf
-    
-    monkeypatch.setattr("src.models.models.pipeline_config", pipline_config)
-    preprocessor = get_preprocessor(RandomForestRegressor)
+def test_get_preprocessor_num_false(cfg_models_not_process_num):
+    cfg = cfg_models_not_process_num
+    preprocessor = get_preprocessor(RandomForestRegressor, cfg)
 
     transformers = {
         transformer: features for _, transformer, features in preprocessor.transformers
     }
 
     assert "passthrough" in list(transformers.keys())
-    assert sorted(pipline_config.features.numeric + pipline_config.features.binary) == sorted(
+    assert sorted(cfg.features.numeric + cfg.features.binary) == sorted(
         transformers["passthrough"]
     )
 
 
-def test_create_model_pipeline_with_class(monkeypatch):
+def test_create_model_pipeline_with_class(monkeypatch, cfg_models_process_num):
+    cfg = cfg_models_process_num
     mock_preprocessor = mock.Mock()
     monkeypatch.setattr(
-        "src.models.models.get_preprocessor", lambda model: mock_preprocessor
+        "src.models.models.get_preprocessor", lambda model, cfg: mock_preprocessor
     )
 
-    pipeline = create_model_pipeline(model=LinearRegression)
+    pipeline = create_model_pipeline(cfg=cfg, model=LinearRegression)
     assert isinstance(pipeline, Pipeline)
-    
+
     named_steps = dict(pipeline.named_steps)
     assert named_steps["preprocessor"] == mock_preprocessor
     assert isinstance(named_steps["model"], LinearRegression)
 
 
-def test_create_model_pipeline_with_instance(monkeypatch):
+def test_create_model_pipeline_with_instance(monkeypatch, cfg_models_process_num):
+    cfg = cfg_models_process_num
     mock_preprocessor = mock.Mock()
 
     monkeypatch.setattr(
-        "src.models.models.get_preprocessor", lambda model: mock_preprocessor
+        "src.models.models.get_preprocessor", lambda model, cfg: mock_preprocessor
     )
     model_instance = LinearRegression()
 
-    pipeline = create_model_pipeline(model_instance=model_instance)
+    pipeline = create_model_pipeline(cfg=cfg, model_instance=model_instance)
     named_steps = dict(pipeline.named_steps)
 
     assert isinstance(pipeline, Pipeline)
@@ -72,8 +69,9 @@ def test_create_model_pipeline_with_instance(monkeypatch):
     assert named_steps["preprocessor"] == mock_preprocessor
 
 
-def test_create_model_pipeline_no_args():
+def test_create_model_pipeline_no_args(cfg_models_process_num):
+    cfg = cfg_models_process_num
     with pytest.raises(
         ValueError, match="Provide either `model` class or `model_instance`."
     ):
-        create_model_pipeline()
+        create_model_pipeline(cfg)
