@@ -253,7 +253,7 @@ def pick_best(
     return pipeline, metrics
 
 
-def get_model_class_and_short(name: str) -> tuple[type[BaseEstimator], str]:
+def get_model_class_and_short(name: str) -> tuple[type[BaseEstimator], str | None]:
     """
     Returns the scikit-learn model class and its short alias based on the model name.
     """
@@ -264,7 +264,10 @@ def get_model_class_and_short(name: str) -> tuple[type[BaseEstimator], str]:
         "KNeighborsRegressor": (KNeighborsRegressor, "knn"),
     }
 
-    if name in models_mapping:
-        return models_mapping[name]
+    for full_name, (model_class, short_alias) in models_mapping.items():
+        if name == full_name:
+            return model_class, short_alias
+        elif name == short_alias:
+            return model_class, None
     else:
         raise ValueError(f"Model '{name}' not found in models_mapping")
