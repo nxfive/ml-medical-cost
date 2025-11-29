@@ -74,10 +74,10 @@ def test_check_model_results(
 ):
     with (
         mock.patch(
-            "src.utils.utils.check_fold_stability", return_value=cfs_return_value
+            "src.utils.validation.check_fold_stability", return_value=cfs_return_value
         ) as mock_stable,
         mock.patch(
-            "src.utils.utils.check_overfitting", return_value=co_return_value
+            "src.utils.validation.check_overfitting", return_value=co_return_value
         ) as mock_overfit,
     ):
         check_model_results(
