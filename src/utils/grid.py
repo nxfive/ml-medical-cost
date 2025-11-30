@@ -20,7 +20,10 @@ def prepare_grid(cfg: DictConfig) -> dict:
     Prepares param_grid for GridSearchCV with 'model' prefixes.
     """
     param_grid: dict[str, list] = {}
-    model_params = {k: list(v) for k, v in cfg.model.params.items()}
+    model_params: dict[str, list] = {}
+
+    if cfg.model.params:
+        model_params = {k: list(v) for k, v in cfg.model.params.items()}
 
     if model_params:
         param_grid = update_param_grid(model_params, "model")
