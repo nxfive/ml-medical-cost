@@ -55,7 +55,7 @@ def save_model_with_metadata(
     metadata_path = models_path / "metadata"
     metadata_path.mkdir(parents=True, exist_ok=True)
     
-    metadata = build_metadata(model.__name__, cfg, params, metrics)
+    metadata = build_metadata(model_name, cfg, params, metrics)
     save_model(model, models_path / f"{file_name}.pkl")
     save_metrics(metadata, metadata_path / f"{file_name}.yml")
 
