@@ -15,4 +15,4 @@ def run_pipeline(cfg: DictConfig):
         raw_dir=Path(cfg.data.raw_dir),
         processed_dir=Path(cfg.data.processed_dir),
     )
-    pipeline.run()
+    pipeline()
