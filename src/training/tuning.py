@@ -128,39 +128,56 @@ def perform_grid_search(
     )
 
 
-def evaluate_target_transformers(
-    inner_pipeline: Pipeline, param_grid: dict[str, list], cfg: DictConfig
-) -> Generator[
-    tuple[Pipeline | TransformedTargetRegressor, dict[str, list], str], None, None
-]:
+def get_transformer(name: str) -> BaseEstimator | None:
     """
-    Generates pipelines with different target transformations and updated parameter grids.
+    Map a string name to a scikit-learn transformer.
     """
     transformer_map = {
         "log": FunctionTransformer(np.log, inverse_func=np.exp),
         "quantile": QuantileTransformer(output_distribution="normal", n_quantiles=100),
         "none": None,
     }
+    return transformer_map[name]
 
-    for transformation, value in cfg.transform.items():
-        local_param_grid = param_grid.copy()
 
-        transformer = transformer_map[transformation]
+def build_pipeline_with_transformer(
+    pipeline: Pipeline, transformer: BaseEstimator | None
+) -> BaseEstimator:
+    """
+    Wrap the pipeline in TransformedTargetRegressor if transformer is provided.
+    """
+    if transformer is None:
+        return pipeline
+    return TransformedTargetRegressor(regressor=pipeline, transformer=transformer)
+
+
+def prepare_transformer_param_grid(
+    base_grid: dict[str, list], params: dict[str, list]
+) -> dict[str, list]:
+    """
+    Merge base param grid with transformer parameters.
+    """
+    grid_copy = base_grid.copy() if base_grid else {}
+    grid_copy = update_param_grid(grid_copy, "regressor")
+    if params:
+        grid_copy.update(update_param_grid(params, "transformer"))
+    return grid_copy
+
+
+def evaluate_target_transformers(
+    inner_pipeline: Pipeline, param_grid: dict[str, list], cfg: DictConfig
+) -> Generator[tuple[BaseEstimator, dict[str, list], str], None, None]:
+    """
+    Generate pipelines with target transformations and updated param grid.
+    """
+    for transformation_name, value in cfg.transform.items():
+        transformer = get_transformer(transformation_name)
+        estimator = build_pipeline_with_transformer(inner_pipeline, transformer)
         params = {k: list(v) for k, v in value["params"].items()}
 
         if transformer is not None:
-            ttr = TransformedTargetRegressor(
-                regressor=inner_pipeline, transformer=transformer
-            )
-            local_param_grid = (
-                update_param_grid(local_param_grid, "regressor")
-                if local_param_grid
-                else {}
-            )
+            local_param_grid = prepare_transformer_param_grid(param_grid, params)
         else:
-            ttr = inner_pipeline
+            local_param_grid = param_grid
 
-        if params:
-            local_param_grid.update(update_param_grid(params, "transformer"))
-
-        yield ttr, local_param_grid, transformation
+        yield estimator, local_param_grid, transformation_name
