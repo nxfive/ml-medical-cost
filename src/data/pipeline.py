@@ -15,6 +15,15 @@ class DataPipeline:
         self.raw_dir = raw_dir
         self.processed_dir = processed_dir
 
+    def __call__(self) -> None:
+        """
+        Executes a full data pipeline.
+        Loads and preprocesses the dataset, then splits it into training and test sets.
+        """
+        df = self.fetch_data()
+        df = convert_features_type(df)
+        self.split_data(df)
+
     def fetch_data(self) -> pd.DataFrame:
         """
         Fetches the dataset from Kaggle if not already downloaded locally
@@ -59,11 +68,3 @@ class DataPipeline:
         X, y = split_features_target(df, target_col)
         X_train, X_test, y_train, y_test = split_train_test(X, y)
         self.save_splits(X_train, X_test, y_train, y_test)
-
-    def run(self) -> None:
-        """
-        Loads and preprocesses the dataset, then splits it into training and test sets.
-        """
-        df = self.fetch_data()
-        df = convert_features_type(df)
-        self.split_data(df)
