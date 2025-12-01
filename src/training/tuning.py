@@ -3,6 +3,7 @@ from typing import Generator, Sequence
 import numpy as np
 import pandas as pd
 from omegaconf import DictConfig
+from sklearn.base import BaseEstimator
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.pipeline import FunctionTransformer, Pipeline
@@ -39,11 +40,11 @@ def train_pipeline(
     return pipeline
 
 
-def make_predictions(pipeline: Pipeline, X: pd.DataFrame) -> pd.Series:
+def make_predictions(estimator: BaseEstimator, X: pd.DataFrame) -> np.ndarray:
     """
-    Generate predictions using the trained pipeline.
+    Generate predictions using the trained estimator.
     """
-    return pipeline.predict(X)
+    return estimator.predict(X)
 
 
 def perform_cross_validation(
@@ -67,6 +68,37 @@ def perform_cross_validation(
     return trained, folds_scores, folds_scores_mean, train_predictions, test_predictions
 
 
+def run_grid_search(
+    pipeline: Pipeline, param_grid: dict[str, list], cfg: DictConfig
+) -> GridSearchCV:
+    """
+    Create a GridSearchCV object for the given pipeline and parameter grid.
+    """
+    cv = get_cv(cfg)
+    return GridSearchCV(pipeline, param_grid, cv, scoring="r2", return_train_score=True)
+
+
+def train_grid_search(
+    grid: GridSearchCV, X_train: pd.DataFrame, y_train: pd.Series
+) -> BaseEstimator:
+    """
+    Fit GridSearchCV on the training data and return the best estimator pipeline.
+    """
+    grid.fit(X_train, y_train)
+    return grid.best_estimator_
+
+
+def get_grid_folds_scores(grid: GridSearchCV) -> list[np.float64]:
+    """
+    Extract test scores for each fold from a fitted GridSearchCV.
+    """
+    cv_results = grid.cv_results_
+    n_splits = grid.cv.get_n_splits()
+    return [
+        cv_results[f"split{i}_test_score"][grid.best_index_] for i in range(n_splits)
+    ]
+
+
 def perform_grid_search(
     pipeline: Pipeline,
     param_grid: dict,
@@ -77,32 +109,22 @@ def perform_grid_search(
     cfg: DictConfig,
 ) -> tuple[GridSearchCV, Sequence[float], float, np.ndarray, np.ndarray]:
     """
-    Performs grid search with cross-validation a on the given pipeline.
+    Perform a GridSearchCV on the given pipeline, fit the best estimator,
+    and generate predictions on training and test sets.
     """
-    gs = GridSearchCV(
-        pipeline,
-        param_grid,
-        cv=get_cv(cfg),
-        scoring="r2",
-        return_train_score=True,
-    )
-    gs.fit(X_train, y_train)
-
-    y_test_pred = gs.best_estimator_.predict(X_test)
-    y_train_pred = gs.best_estimator_.predict(X_train)
-    cv_results = gs.cv_results_
-    n_splits = gs.cv.get_n_splits()
-    folds_scores = [
-        cv_results[f"split{i}_test_score"][gs.best_index_] for i in range(n_splits)
-    ]
-    folds_scores_mean = np.mean(folds_scores)
+    grid = run_grid_search(pipeline, param_grid, cfg)
+    trained = train_grid_search(grid, X_train, y_train)
+    train_predictions = make_predictions(trained, X_train)
+    test_predictions = make_predictions(trained, X_test)
+    folds_scores = get_grid_folds_scores(grid)
+    folds_scores_mean = compute_scores_mean(folds_scores)
 
     return (
-        gs.best_estimator_,
+        trained,
         folds_scores,
         folds_scores_mean,
-        y_train_pred,
-        y_test_pred,
+        train_predictions,
+        test_predictions,
     )
 
 
