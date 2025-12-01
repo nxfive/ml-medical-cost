@@ -12,6 +12,40 @@ from src.utils.cv import get_cv
 from src.utils.grid import update_param_grid
 
 
+def run_cross_validation(
+    pipeline: Pipeline, X_train: pd.DataFrame, y_train: pd.Series, cfg: DictConfig
+) -> list[np.float64]:
+    """
+    Perform cross-validation on the given pipeline using the configuration provided.
+    """
+    cv = get_cv(cfg)
+    return cross_val_score(pipeline, X_train, y_train, cv, scoring="r2")
+
+
+def compute_scores_mean(fold_scores: list[np.float64]) -> np.float64:
+    """
+    Compute the mean score from a list of fold scores.
+    """
+    return np.mean(fold_scores)
+
+
+def train_pipeline(
+    pipeline: Pipeline, X_train: pd.DataFrame, y_train: pd.Series
+) -> Pipeline:
+    """
+    Fit the given pipeline on the training data.
+    """
+    pipeline.fit(X_train, y_train)
+    return pipeline
+
+
+def make_predictions(pipeline: Pipeline, X: pd.DataFrame) -> pd.Series:
+    """
+    Generate predictions using the trained pipeline.
+    """
+    return pipeline.predict(X)
+
+
 def perform_cross_validation(
     pipeline: Pipeline,
     *,
@@ -21,19 +55,16 @@ def perform_cross_validation(
     cfg: DictConfig,
 ) -> tuple[Pipeline, Sequence[float], float, np.ndarray, np.ndarray]:
     """
-    Performs cross-validation on the given pipeline.
+    Performs cross-validation, fits the pipeline,
+    and generates predictions for train and test sets.
     """
-    folds_scores = cross_val_score(
-        pipeline, X_train, y_train, cv=get_cv(cfg), scoring="r2"
-    )
-    folds_scores_mean = np.mean(folds_scores)
+    folds_scores = run_cross_validation(pipeline, X_train, y_train, cfg)
+    folds_scores_mean = compute_scores_mean(folds_scores)
+    trained = train_pipeline(pipeline, X_train, y_train)
+    train_predictions = make_predictions(trained, X_train)
+    test_predictions = make_predictions(trained, X_test)
 
-    pipeline.fit(X_train, y_train)
-
-    y_train_pred = pipeline.predict(X_train)
-    y_test_pred = pipeline.predict(X_test)
-
-    return pipeline, folds_scores, folds_scores_mean, y_train_pred, y_test_pred
+    return trained, folds_scores, folds_scores_mean, train_predictions, test_predictions
 
 
 def perform_grid_search(
@@ -54,7 +85,6 @@ def perform_grid_search(
         cv=get_cv(cfg),
         scoring="r2",
         return_train_score=True,
-        error_score="raise",
     )
     gs.fit(X_train, y_train)
 
