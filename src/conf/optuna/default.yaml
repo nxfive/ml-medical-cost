@@ -1,2 +1,3 @@
-trials: 20
-timeout: null
+study:
+  trials: 20
+  timeout: null
