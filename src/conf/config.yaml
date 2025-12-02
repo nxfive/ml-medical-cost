@@ -20,3 +20,7 @@ training:
 
 models:
   output_dir: "models"
+
+kaggle:
+  handle: mirichoi0218/insurance
+  filename: insurance.csv
