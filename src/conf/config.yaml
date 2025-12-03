@@ -17,6 +17,8 @@ data:
 
 training:
   output_dir: "src/training/results"
+  model_file: "pipeline.pkl"
+  metrics_file: "metrics.yaml"
 
 models:
   output_dir: "models"
