@@ -1,22 +1,93 @@
+from pathlib import Path
+from typing import Any
+
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.base import BaseEstimator
+
+from src.io.file_ops import PathManager
+from src.io.readers import JoblibReader, ParquetReader, YamlReader
+from src.io.writers import ParquetWriter
+
+from .converters import CSVToParquetConverter
+from .download import DatasetDownloader
+from .types import SplitData
 
 
-def split_features_target(
-    df: pd.DataFrame, target_col: str
-) -> tuple[pd.DataFrame, pd.Series]:
-    """
-    Splits DataFrame into features X and target y.
-    """
-    X = df.drop([target_col], axis=1)
-    y = df[target_col]
-    return X, y
+class DataLoader:
+    def __init__(
+        self,
+        processed_dir: Path,
+        parquet_reader: ParquetReader,
+        yaml_reader: YamlReader,
+        joblib_reader: JoblibReader,
+    ):
+        self.processed_dir = processed_dir
+        self.parquet_reader = parquet_reader
+        self.yaml_reader = yaml_reader
+        self.joblib_reader = joblib_reader
+
+    def load_splitted_data(self) -> SplitData:
+        """
+        Loads train/test splits from processed directory into a SplitData object.
+        """
+        X_train = self.parquet_reader.read(self.processed_dir / "X_train.parquet")
+        X_test = self.parquet_reader.read(self.processed_dir / "X_test.parquet")
+        y_train = self.parquet_reader.read(self.processed_dir / "y_train.parquet")
+        y_test = self.parquet_reader.read(self.processed_dir / "y_test.parquet")
+
+        return SplitData(X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
+
+    def load_metrics(self, metrics_path: Path) -> dict[str, Any]:
+        """
+        Load metrics from a YAML file and return as a dictionary.
+        """
+        return self.yaml_reader.read(metrics_path)
+
+    def load_model(self, model_path: Path) -> BaseEstimator:
+        """
+        Loads model from Pickle file and return estimator.
+        """
+        return self.joblib_reader.read(model_path)
 
 
-def split_train_test(
-    X: pd.DataFrame, y: pd.Series, test_size=0.2, random_state=42
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-    """
-    Splits features and target into train/test sets.
-    """
-    return train_test_split(X, y, test_size=test_size, random_state=random_state)
+class DataSaver:
+    def __init__(self, processed_dir: Path, parquet_writer: ParquetWriter):
+        self.processed_dir = processed_dir
+        self.parquet_writer = parquet_writer
+
+    def save_splitted_data(self, splits: SplitData) -> None:
+        """
+        Saves each split from a SplitData object as a Parquet file in the processed
+        directory.
+        """
+        for name, value in splits.to_dict().items():
+            self.parquet_writer.write(value, self.processed_dir / f"{name}.parquet")
+
+
+class DataFetcher:
+    def __init__(
+        self,
+        raw_dir: Path,
+        downloader: DatasetDownloader,
+        converter: CSVToParquetConverter,
+        parquet_reader: ParquetReader,
+    ):
+        self.raw_dir = raw_dir
+        self.downloader = downloader
+        self.converter = converter
+        self.parquet_reader = parquet_reader
+
+    def fetch(self, filename: str = "insurance.parquet") -> pd.DataFrame:
+        """
+        Fetches dataset as a Pandas DataFrame. Downloads CSV and converts to
+        Parquet if needed.
+        """
+        parquet_path = self.raw_dir / filename
+
+        if PathManager.exists(parquet_path):
+            return self.parquet_reader.read(parquet_path)
+
+        csv_path = self.downloader.download()
+        parquet_path = self.converter.convert(csv_path, parquet_path)
+        PathManager.remove_file(csv_path)
+        return self.parquet_reader.read(parquet_path)
