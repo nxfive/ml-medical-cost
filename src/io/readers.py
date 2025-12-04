@@ -1,18 +1,21 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any
+from typing import Generic, TypeVar
 
 import joblib
 import pandas as pd
 import yaml
+from sklearn.base import BaseEstimator
+
+T = TypeVar("T")
 
 
-class BaseReader(ABC):
+class BaseReader(ABC, Generic[T]):
     @abstractmethod
-    def read(self, path: Path) -> Any: ...
+    def read(self, path: Path) -> T: ...
 
 
-class CSVReader(BaseReader):
+class CSVReader(BaseReader[pd.DataFrame]):
     def read(self, path: Path) -> pd.DataFrame:
         """
         Reads a CSV file from the given path into a pandas DataFrame.
@@ -20,7 +23,7 @@ class CSVReader(BaseReader):
         return pd.read_csv(path)
 
 
-class YamlReader(BaseReader):
+class YamlReader(BaseReader[dict]):
     def read(self, path: Path) -> dict:
         """
         Reads a YAML file from the given path into a Python dictionary.
@@ -29,7 +32,7 @@ class YamlReader(BaseReader):
             return yaml.safe_load(f)
 
 
-class ParquetReader(BaseReader):
+class ParquetReader(BaseReader[pd.DataFrame]):
     def read(self, path: Path) -> pd.DataFrame:
         """
         Reads a Parquet file from the given path into a pandas DataFrame.
@@ -37,9 +40,9 @@ class ParquetReader(BaseReader):
         return pd.read_parquet(path)
 
 
-class JoblibReader(BaseReader):
-    def read(self, path: Path) -> Any:
+class JoblibReader(BaseReader[BaseEstimator]):
+    def read(self, path: Path) -> BaseEstimator:
         """
-        Reads a Python object from a joblib file at the given path.
+        Reads a Joblib file from the given path into a scikit-learn model.
         """
         return joblib.load(path)
