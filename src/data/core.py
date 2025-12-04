@@ -6,7 +6,7 @@ from sklearn.base import BaseEstimator
 
 from src.io.file_ops import PathManager
 from src.io.readers import JoblibReader, ParquetReader, YamlReader
-from src.io.writers import ParquetWriter
+from src.io.writers import JoblibWriter, ParquetWriter, YamlWriter
 
 from .converters import CSVToParquetConverter
 from .download import DatasetDownloader
@@ -39,7 +39,7 @@ class DataLoader:
 
     def load_metrics(self, metrics_path: Path) -> dict[str, Any]:
         """
-        Load metrics from a YAML file and return as a dictionary.
+        Loads metrics from a YAML file and return as a dictionary.
         """
         return self.yaml_reader.read(metrics_path)
 
@@ -51,9 +51,17 @@ class DataLoader:
 
 
 class DataSaver:
-    def __init__(self, processed_dir: Path, parquet_writer: ParquetWriter):
+    def __init__(
+        self,
+        processed_dir: Path,
+        parquet_writer: ParquetWriter,
+        joblib_writer: JoblibWriter,
+        yaml_writer: YamlWriter,
+    ):
         self.processed_dir = processed_dir
         self.parquet_writer = parquet_writer
+        self.joblib_writer = joblib_writer
+        self.yaml_writer = yaml_writer
 
     def save_splitted_data(self, splits: SplitData) -> None:
         """
@@ -62,6 +70,18 @@ class DataSaver:
         """
         for name, value in splits.to_dict().items():
             self.parquet_writer.write(value, self.processed_dir / f"{name}.parquet")
+
+    def save_metrics(self, metrics: dict[str, Any], metrics_path: Path) -> None:
+        """
+        Saves evaluation metrics as a YAML file.
+        """
+        self.yaml_writer.write(metrics, metrics_path)
+
+    def save_model(self, model: BaseEstimator, model_path: Path) -> None:
+        """
+        Saves a scikit-learn model using Joblib.
+        """
+        self.joblib_writer.write(model, model_path)
 
 
 class DataFetcher:
