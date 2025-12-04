@@ -1,18 +1,19 @@
 from abc import ABC, abstractmethod
-from typing import Generator, Sequence
+from typing import Generator
 
 import numpy as np
 import pandas as pd
-from omegaconf import DictConfig
 from sklearn.base import BaseEstimator
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
 from sklearn.pipeline import FunctionTransformer, Pipeline
 from sklearn.preprocessing import QuantileTransformer
 
-from src.utils.grid import update_param_grid
+from src.conf.schema import TransformersConfig
+from src.utils.grid import ParamGrid
 
 from .core import compute_scores_mean
+from .types import EvaluationResult, RunnerResult
 
 
 class BaseRunner(ABC):
@@ -52,7 +53,7 @@ class CrossValidationRunner(BaseRunner):
 
     def run(
         self, X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series
-    ) -> tuple[Pipeline, Sequence[float], float, np.ndarray, np.ndarray]:
+    ) -> RunnerResult:
         """
         Performs cross-validation, fits the pipeline and generates predictions for train and
         test sets.
@@ -63,12 +64,12 @@ class CrossValidationRunner(BaseRunner):
         train_predictions = self.make_predictions(trained, X_train)
         test_predictions = self.make_predictions(trained, X_test)
 
-        return (
-            trained,
-            folds_scores,
-            folds_scores_mean,
-            train_predictions,
-            test_predictions,
+        return RunnerResult(
+            trained=trained,
+            folds_scores=folds_scores,
+            folds_scores_mean=folds_scores_mean,
+            train_predictions=train_predictions,
+            test_predictions=test_predictions,
         )
 
 
@@ -114,9 +115,9 @@ class GridSearchRunner(BaseRunner):
 
     def run(
         self, X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series
-    ) -> tuple[GridSearchCV, Sequence[float], float, np.ndarray, np.ndarray]:
+    ) -> RunnerResult:
         """
-        Performs a GridSearchCV on the given pipeline, fits the best estimator and 
+        Performs a GridSearchCV on the given pipeline, fits the best estimator and
         generates predictions on training and test sets.
         """
         grid = self.perform_grid_search()
@@ -126,12 +127,12 @@ class GridSearchRunner(BaseRunner):
         folds_scores = self.get_grid_folds_scores(grid)
         folds_scores_mean = compute_scores_mean(folds_scores)
 
-        return (
-            trained,
-            folds_scores,
-            folds_scores_mean,
-            train_predictions,
-            test_predictions,
+        return RunnerResult(
+            trained=trained,
+            folds_scores=folds_scores,
+            folds_scores_mean=folds_scores_mean,
+            train_predictions=train_predictions,
+            test_predictions=test_predictions,
         )
 
 
@@ -143,7 +144,10 @@ class TargetTransformer:
     }
 
     def __init__(
-        self, pipeline: Pipeline, param_grid: dict[str, list], cfg_transform: DictConfig
+        self,
+        pipeline: Pipeline,
+        param_grid: dict[str, list],
+        cfg_transform: TransformersConfig,
     ):
         self.pipeline = pipeline
         self.param_grid = param_grid
@@ -173,18 +177,18 @@ class TargetTransformer:
         Merges base param grid with transformer parameters.
         """
         grid_copy = self.param_grid.copy() if self.param_grid else {}
-        grid_copy = update_param_grid(grid_copy, "regressor")
+        grid_copy = ParamGrid.prefix(grid_copy, "regressor")
         if params:
-            grid_copy.update(update_param_grid(params, "transformer"))
+            grid_copy.update(ParamGrid.prefix(params, "transformer"))
         return grid_copy
 
     def evaluate(
         self,
-    ) -> Generator[tuple[BaseEstimator, dict[str, list], str], None, None]:
+    ) -> Generator[EvaluationResult, None, None]:
         """
         Generates pipelines with target transformations and updated param grid.
         """
-        for transformation_name, value in self.cfg_transform.items():
+        for transformation_name, value in self.cfg_transform.to_dict().items():
             transformer = TargetTransformer.get(transformation_name)
             estimator = self.build_wrapper_pipeline(transformer)
 
@@ -194,4 +198,8 @@ class TargetTransformer:
             else:
                 local_param_grid = self.param_grid
 
-            yield estimator, local_param_grid, transformation_name
+            yield EvaluationResult(
+                estimator=estimator,
+                param_grid=local_param_grid,
+                transformation_name=transformation_name,
+            )
