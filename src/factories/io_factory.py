@@ -1,22 +1,20 @@
-from src.io.readers import (BaseReader, CSVReader, JoblibReader, ParquetReader,
-                            YamlReader)
-from src.io.writers import BaseWriter, JoblibWriter, ParquetWriter, YamlWriter
+from src.io.readers import CSVReader, JoblibReader, ParquetReader, YamlReader
+from src.io.types import Readers, Writers
+from src.io.writers import JoblibWriter, ParquetWriter, YamlWriter
 
 
 class IOFactory:
     @staticmethod
-    def create_writers() -> dict[str, BaseWriter]:
-        return {
-            "parquet": ParquetWriter(),
-            "yaml": YamlWriter(),
-            "joblib": JoblibWriter(),
-        }
+    def create_writers() -> Writers:
+        return Writers(
+            parquet=ParquetWriter(), yaml=YamlWriter(), joblib=JoblibWriter()
+        )
 
     @staticmethod
-    def create_readers() -> dict[str, BaseReader]:
-        return {
-            "csv": CSVReader(),
-            "parquet": ParquetReader(),
-            "yaml": YamlReader(),
-            "joblib": JoblibReader(),
-        }
+    def create_readers() -> Readers:
+        return Readers(
+            csv=CSVReader(),
+            parquet=ParquetReader(),
+            yaml=YamlReader(),
+            joblib=JoblibReader(),
+        )
