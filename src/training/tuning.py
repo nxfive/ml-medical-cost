@@ -197,8 +197,8 @@ class TargetTransformer:
         """
         Generates pipelines with target transformations and updated param grid.
         """
-        for transformation_name, value in self.cfg_transform.to_dict().items():
-            transformer = TargetTransformer.get(transformation_name)
+        for transformation, value in self.cfg_transform.to_dict().items():
+            transformer = TargetTransformer.get(transformation)
             estimator = self.build_wrapper_pipeline(pipeline, transformer)
 
             if transformer is not None:
@@ -210,5 +210,5 @@ class TargetTransformer:
             yield EvaluationResult(
                 estimator=estimator,
                 param_grid=local_param_grid,
-                transformation_name=transformation_name,
+                transformation=transformation,
             )
