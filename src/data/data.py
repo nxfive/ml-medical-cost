@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.utils.split import DataSplitter
+from src.data.split import split_features_target, split_train_test
 
 from .core import DataFetcher, DataSaver
 
@@ -22,6 +22,6 @@ class Data:
         Splits a DataFrame into features (X) and target (y), then into training and test sets,
         and save the resulting datasets as Parquet files.
         """
-        X, y = DataSplitter.split_features_target(df, target_col)
-        split_data = DataSplitter.split_train_test(X, y)
+        X, y = split_features_target(df, target_col)
+        split_data = split_train_test(X, y)
         self.data_saver.save_splitted_data(split_data)
