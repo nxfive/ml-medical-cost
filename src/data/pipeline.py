@@ -6,7 +6,7 @@ from src.io.file_ops import PathManager
 from src.patterns.base_pipeline import BasePipeline
 
 
-class DataPipeline(BasePipeline):
+class DataPipeline(BasePipeline[None]):
     def __init__(
         self, raw_dir: str, processed_dir: str, kaggle_handle: str, kaggle_filename: str
     ):
@@ -20,14 +20,14 @@ class DataPipeline(BasePipeline):
             kaggle_filename=kaggle_filename,
         )
 
-    def build(self):
+    def build(self) -> None:
         """
         Ensures that the required directories exist.
         """
         PathManager.ensure_dir(self.raw_dir)
         PathManager.ensure_dir(self.processed_dir)
 
-    def run(self):
+    def run(self) -> None:
         """
         Executes a full data pipeline.
         """
