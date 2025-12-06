@@ -30,6 +30,27 @@ class BaseRunner(ABC):
         """
         return estimator.predict(X)
 
+    @staticmethod
+    def _collect_results(
+        trained: BaseEstimator,
+        folds_scores: list[float],
+        X_train: pd.DataFrame,
+        X_test: pd.DataFrame,
+    ) -> RunnerResult:
+        """
+        Creates RunnerResult from trained estimator and CV scores.
+        """
+        folds_scores_mean = compute_scores_mean(folds_scores)
+        train_predictions = BaseRunner.make_predictions(trained, X_train)
+        test_predictions = BaseRunner.make_predictions(trained, X_test)
+        return RunnerResult(
+            trained=trained,
+            folds_scores=folds_scores,
+            folds_scores_mean=folds_scores_mean,
+            train_predictions=train_predictions,
+            test_predictions=test_predictions,
+        )
+
 
 class CrossValidationRunner(BaseRunner):
     def __init__(self, cv: KFold):
@@ -65,18 +86,9 @@ class CrossValidationRunner(BaseRunner):
         test sets.
         """
         folds_scores = self.perform_cross_validation(estimator, X_train, y_train)
-        folds_scores_mean = compute_scores_mean(folds_scores)
         trained = self.fit_estimator(estimator, X_train, y_train)
-        train_predictions = self.make_predictions(trained, X_train)
-        test_predictions = self.make_predictions(trained, X_test)
 
-        return RunnerResult(
-            trained=trained,
-            folds_scores=folds_scores,
-            folds_scores_mean=folds_scores_mean,
-            train_predictions=train_predictions,
-            test_predictions=test_predictions,
-        )
+        return self._collect_results(trained, folds_scores, X_train, X_test)
 
 
 class GridSearchRunner(BaseRunner):
@@ -132,19 +144,10 @@ class GridSearchRunner(BaseRunner):
         generates predictions on training and test sets.
         """
         grid = self.perform_grid_search(estimator, param_grid)
-        trained = self.fit_grid_search(grid, X_train, y_train)
-        train_predictions = self.make_predictions(trained, X_train)
-        test_predictions = self.make_predictions(trained, X_test)
         folds_scores = self.get_grid_folds_scores(grid)
-        folds_scores_mean = compute_scores_mean(folds_scores)
+        trained = self.fit_grid_search(grid, X_train, y_train)
 
-        return RunnerResult(
-            trained=trained,
-            folds_scores=folds_scores,
-            folds_scores_mean=folds_scores_mean,
-            train_predictions=train_predictions,
-            test_predictions=test_predictions,
-        )
+        return self._collect_results(trained, folds_scores, X_train, X_test)
 
 
 class TargetTransformer:
