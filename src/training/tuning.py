@@ -164,8 +164,9 @@ class TargetTransformer:
         """
         return cls.TRANSFORMERS.get(name)
 
+    @staticmethod
     def build_wrapper_pipeline(
-        self, pipeline: Pipeline, transformer: BaseEstimator | None
+        pipeline: Pipeline, transformer: BaseEstimator | None
     ) -> BaseEstimator:
         """
         Wraps the pipeline in TransformedTargetRegressor if transformer is provided.
@@ -174,8 +175,9 @@ class TargetTransformer:
             return pipeline
         return TransformedTargetRegressor(regressor=pipeline, transformer=transformer)
 
+    @staticmethod
     def prepare_param_grid(
-        self, param_grid: dict[str, list], params: dict[str, list]
+        param_grid: dict[str, list], params: dict[str, list]
     ) -> dict[str, list]:
         """
         Merges base param grid with transformer parameters.
