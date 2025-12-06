@@ -20,12 +20,12 @@ class DataLoader:
         """
         Loads train/test splits from processed directory into a SplitData object.
         """
-        X_train = self.readers.parquet.read(processed_dir / "X_train.parquet")
-        X_test = self.readers.parquet.read(processed_dir / "X_test.parquet")
-        y_train = self.readers.parquet.read(processed_dir / "y_train.parquet")
-        y_test = self.readers.parquet.read(processed_dir / "y_test.parquet")
-
-        return SplitData(X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test)
+        files = ["X_train", "X_test", "y_train", "y_test"]
+        data = {
+            file: self.readers.parquet.read(processed_dir / f"{file}.parquet")
+            for file in files
+        }
+        return SplitData.from_dict(data)
 
     def load_metrics(self, metrics_path: Path) -> dict[str, Any]:
         """
