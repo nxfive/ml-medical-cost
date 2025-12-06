@@ -17,11 +17,11 @@ class RunnerResult:
 class EvaluationResult:
     estimator: BaseEstimator
     param_grid: dict[str, list]
-    transformation_name: str | None
+    transformation: str = "none"
 
 
 @dataclass
 class TrainResult:
     runner_result: RunnerResult
     param_grid: dict[str, list]
-    transformation_name: str | None
+    transformation: str | None
