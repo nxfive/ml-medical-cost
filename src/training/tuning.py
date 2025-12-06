@@ -144,8 +144,8 @@ class GridSearchRunner(BaseRunner):
         generates predictions on training and test sets.
         """
         grid = self.perform_grid_search(estimator, param_grid)
-        folds_scores = self.get_grid_folds_scores(grid)
         trained = self.fit_grid_search(grid, X_train, y_train)
+        folds_scores = self.get_grid_folds_scores(grid)
 
         return self._collect_results(trained, folds_scores, X_train, X_test)
 
