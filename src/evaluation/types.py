@@ -1,18 +1,20 @@
-from typing import TypedDict
+from dataclasses import dataclass
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
-YType = pd.Series | npt.NDArray[np.float_]
+YType = pd.Series | npt.NDArray[np.float64]
 
 
-class SplitMetrics(TypedDict):
+@dataclass
+class SplitMetrics:
     r2: float
     mae: float
     rmse: float
 
 
-class AllMetrics(TypedDict):
+@dataclass
+class AllMetrics:
     train: SplitMetrics
     test: SplitMetrics
