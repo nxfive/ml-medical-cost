@@ -57,3 +57,9 @@ class ModelLog:
     folds_scores: list[np.float64] | None = None
     folds_scores_mean: np.float64 | None = None
     study: optuna.Study | None = None
+
+
+@dataclass
+class ModelRun:
+    result: ModelResult
+    estimator: BaseEstimator
