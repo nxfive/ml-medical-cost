@@ -13,7 +13,7 @@ from src.conf.schema import TransformersConfig
 from src.evaluation.metrics import compute_scores_mean
 from src.params.grid import ParamGrid
 
-from .types import EvaluationResult, RunnerResult
+from .types import EvaluationResult, RunnerResult, TransformersDict
 
 
 class BaseRunner(ABC):
@@ -151,7 +151,7 @@ class GridSearchRunner(BaseRunner):
 
 
 class TargetTransformer:
-    TRANSFORMERS: dict[str, BaseEstimator | None] = {
+    TRANSFORMERS: TransformersDict = {
         "log": FunctionTransformer(np.log, inverse_func=np.exp),
         "quantile": QuantileTransformer(output_distribution="normal", n_quantiles=100),
         "none": None,
