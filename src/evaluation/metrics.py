@@ -1,9 +1,17 @@
 from dataclasses import asdict
 
+import numpy as np
 from sklearn.metrics import (mean_absolute_error, r2_score,
                              root_mean_squared_error)
 
 from .types import AllMetrics, SplitMetrics, YType
+
+
+def compute_scores_mean(fold_scores: list[np.float64]) -> np.float64:
+    """
+    Computes the mean score from a list of fold scores.
+    """
+    return np.mean(fold_scores)
 
 
 def compute_split_metrics(y: YType, y_pred: YType) -> SplitMetrics:
