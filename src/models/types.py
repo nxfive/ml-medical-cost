@@ -3,6 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TypedDict
 
+import numpy as np
+import pandas as pd
+from sklearn.base import BaseEstimator
+
+import optuna
+
 
 class ModelResultDict(TypedDict):
     model_name: str
@@ -38,3 +44,16 @@ class ModelResult:
             folds_scores_mean=result["folds_scores_mean"],
             metrics=result["metrics"],
         )
+
+
+@dataclass
+class ModelLog:
+    model_class: type[BaseEstimator]
+    estimator: BaseEstimator
+    X_train: pd.DataFrame
+    param_grid: dict[str, list]
+    metrics: dict[str, float]
+    transformation: str | None = None
+    folds_scores: list[np.float64] | None = None
+    folds_scores_mean: np.float64 | None = None
+    study: optuna.Study | None = None
