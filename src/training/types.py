@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import TypedDict
 
 import numpy as np
 from sklearn.base import BaseEstimator
@@ -29,3 +30,9 @@ class TrainResult:
     runner_result: RunnerResult
     param_grid: dict[str, list]
     transformation: str | None
+
+
+class TransformersDict(TypedDict):
+    log: BaseEstimator
+    quantile: BaseEstimator
+    none: None
