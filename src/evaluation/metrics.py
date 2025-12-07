@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 from sklearn.metrics import (mean_absolute_error, r2_score,
                              root_mean_squared_error)
 
@@ -25,3 +27,25 @@ def get_metrics(
         train=compute_split_metrics(y_train, train_predictions),
         test=compute_split_metrics(y_test, test_predictions),
     )
+
+
+def flatten_dict(prefix: str, d: dict) -> dict[str, float]:
+    """
+    Recursively flattens a nested dictionary into a single-level dict,
+    prefixing nested keys with their parent keys.
+    """
+    flat = {}
+    for key, value in d.items():
+        name = f"{prefix}_{key}" if prefix else key
+        if isinstance(value, dict):
+            flat.update(flatten_dict(name, value))
+        else:
+            flat[name] = value
+    return flat
+
+
+def flatten_metrics(metrics: AllMetrics) -> dict[str, float]:
+    """
+    Converts an AllMetrics dataclass into a flat dictionary.
+    """
+    return flatten_dict("", asdict(metrics))
