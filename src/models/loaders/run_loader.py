@@ -3,7 +3,7 @@ from pathlib import Path
 from src.conf.schema import TrainingDir
 from src.data.core import DataLoader
 from src.io.file_ops import PathManager
-from src.models.types import ModelRun
+from src.models.types import ModelResult, ModelRun
 
 
 class RunLoader:
@@ -24,4 +24,4 @@ class RunLoader:
         metrics = self.data_loader.load_metrics(metrics_path)
         pipeline = self.data_loader.load_model(pipeline_path)
 
-        return ModelRun(model_result=metrics, model=pipeline)
+        return ModelRun(result=ModelResult.from_dict(metrics), estimator=pipeline)
