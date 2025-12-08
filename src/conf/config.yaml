@@ -4,7 +4,7 @@ defaults:
   - model: linear
   - cv: default
   - transform: default
-  - optuna: all
+  - optuna: linear
 
 project_name: ml-medical-cost
 
