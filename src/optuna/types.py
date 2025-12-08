@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from omegaconf import DictConfig
 from sklearn.base import BaseEstimator
 
 import optuna
@@ -19,3 +20,9 @@ class OptunaResult:
     transformation: str
     metrics: dict[str, float]
     study: optuna.Study
+
+
+@dataclass
+class DynamicConfig:
+    model: DictConfig
+    optuna_model: DictConfig
