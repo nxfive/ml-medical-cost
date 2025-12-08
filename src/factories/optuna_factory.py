@@ -25,7 +25,7 @@ class OptunaConfigFactory:
         optuna_cfg = OptunaConfig.from_omegaconf(cfg.optuna.study)
 
         model_cfg = ModelConfig.from_omegaconf(dynamic_cfg.model)
-        optuna_model_cfg = OptunaModelConfig.from_omegaconf(dynamic_cfg.optuna_model)
+        optuna_model_cfg = OptunaModelConfig.from_omegaconf(dynamic_cfg.optuna_model.model)
 
         model_cfg.model_class = model_class
 
