@@ -1,31 +1,21 @@
-from pathlib import Path
-
+from src.conf.schema import DataStageConfig
 from src.factories.data_factory import DataFactory
 from src.features.core import convert_features_type
 from src.io.file_ops import PathManager
 from src.patterns.base_pipeline import BasePipeline
 
 
-class DataPipeline(BasePipeline[None]):
-    def __init__(
-        self, raw_dir: str, processed_dir: str, kaggle_handle: str, kaggle_filename: str
-    ):
-        self.raw_dir = Path(raw_dir)
-        self.processed_dir = Path(processed_dir)
-
-        self.data = DataFactory.create(
-            raw_dir=self.raw_dir,
-            processed_dir=self.processed_dir,
-            kaggle_handle=kaggle_handle,
-            kaggle_filename=kaggle_filename,
-        )
+class DataPipeline(BasePipeline[None, None]):
+    def __init__(self, cfg: DataStageConfig):
+        self.cfg = cfg
+        self.data = DataFactory.create(cfg=self.cfg)
 
     def build(self) -> None:
         """
         Ensures that the required directories exist.
         """
-        PathManager.ensure_dir(self.raw_dir)
-        PathManager.ensure_dir(self.processed_dir)
+        PathManager.ensure_dir(self.cfg.data_dir.raw_dir)
+        PathManager.ensure_dir(self.cfg.data_dir.processed_dir)
 
     def run(self) -> None:
         """
