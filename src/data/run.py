@@ -1,10 +1,8 @@
-from omegaconf import DictConfig
+from src.conf.schema import DataStageConfig
 
 from .pipeline import DataPipeline
 
 
-def run(cfg: DictConfig):
-    pipeline = DataPipeline(
-        cfg.data.raw_dir, cfg.data.processed_dir, cfg.kaggle.handle, cfg.kaggle.filename
-    )
+def run(cfg: DataStageConfig):
+    pipeline = DataPipeline(cfg)
     pipeline.run()
