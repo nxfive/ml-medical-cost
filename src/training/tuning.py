@@ -62,7 +62,7 @@ class CrossValidationRunner(BaseRunner):
         """
         Performs cross-validation on the given estimator using the configuration provided.
         """
-        return cross_val_score(estimator, X_train, y_train, self.cv, scoring="r2")
+        return list(cross_val_score(estimator, X_train, y_train, cv=self.cv, scoring="r2"))
 
     @staticmethod
     def fit_estimator(
@@ -202,7 +202,7 @@ class TargetTransformer:
             estimator = self.build_wrapper_pipeline(pipeline, transformer)
 
             if transformer is not None:
-                params = value["params"]
+                params = value.params
                 local_param_grid = self.prepare_param_grid(param_grid, params)
             else:
                 local_param_grid = param_grid
