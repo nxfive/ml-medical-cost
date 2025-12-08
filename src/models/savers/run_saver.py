@@ -24,7 +24,7 @@ class RunSaver:
         PathManager.ensure_dir(results_path)
 
         self.data_saver.save_metrics(
-            metrics=run.result,
+            metrics=run.result.to_dict(),
             metrics_path=results_path / self.training_dir.metrics_file,
         )
         self.data_saver.save_model(
