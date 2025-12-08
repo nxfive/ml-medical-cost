@@ -14,7 +14,7 @@ from src.io.types import Readers, Writers
 from src.mlflow.logging import log_model, setup_mlflow
 from src.models.registry import get_model_class_and_short
 from src.models.savers.run_saver import RunSaver
-from src.models.types import ModelLog, ModelResult
+from src.models.types import ModelLog, ModelResult, ModelRun
 from src.patterns.base_pipeline import BasePipeline
 
 from .train import TrainModel
@@ -70,15 +70,19 @@ class TrainingPipeline(BasePipeline[BuildResult, None]):
         """
         Saves the training results and pipeline to persistent storage.
         """
-        run_saver.save_run(
-            ModelResult(
-                model_name=model_name,
-                param_grid=train_result.param_grid,
-                folds_scores_mean=float(train_result.runner_result.folds_scores_mean),
-                metrics=flatten_metrics,
-                transformation=train_result.transformation,
-            ).to_dict(),
-            pipeline=train_result.runner_result.trained,
+        run_saver.save(
+            ModelRun(
+                result=ModelResult(
+                    model_name=model_name,
+                    param_grid=train_result.param_grid,
+                    folds_scores_mean=float(
+                        train_result.runner_result.folds_scores_mean
+                    ),
+                    metrics=flatten_metrics,
+                    transformation=train_result.transformation,
+                ),
+                estimator=train_result.runner_result.trained,
+            )
         )
 
     @staticmethod
