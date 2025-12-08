@@ -1,1 +1,6 @@
-params: {}
+defaults:
+  - default
+
+model: 
+  name: linear
+  params: {}

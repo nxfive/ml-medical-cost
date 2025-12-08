@@ -1,16 +1,21 @@
-params:
-  n_neighbors:
-    min: 3
-    max: 10
-    step: 1
-  leaf_size:
-    min: 10
-    max: 40
-    step: 5
-  p:
-    - 1
-    - 2
-  weights:
-    choices: 
-      - uniform
-      - distance
+defaults:
+  - default
+
+model:
+  name: knn
+  params:
+    n_neighbors:
+      min: 3
+      max: 10
+      step: 1
+    leaf_size:
+      min: 10
+      max: 40
+      step: 5
+    p:
+      - 1
+      - 2
+    weights:
+      choices: 
+        - uniform
+        - distance
