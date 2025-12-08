@@ -28,5 +28,5 @@ class RunSaver:
             metrics_path=results_path / self.training_dir.metrics_file,
         )
         self.data_saver.save_model(
-            model=run.model, model_path=results_path / self.training_dir.model_file
+            model=run.estimator, model_path=results_path / self.training_dir.model_file
         )
