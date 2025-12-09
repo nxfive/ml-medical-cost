@@ -142,3 +142,6 @@ class OptunaStageConfig:
     optuna_model_config: OptunaModelConfig
     features: FeaturesConfig
     cv: CVConfig
+
+
+StageConfig = TrainingStageConfig | OptunaStageConfig
