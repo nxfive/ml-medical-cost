@@ -4,16 +4,16 @@ from typing import Generator
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
-from sklearn.compose import TransformedTargetRegressor
 from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
-from sklearn.pipeline import FunctionTransformer, Pipeline
-from sklearn.preprocessing import QuantileTransformer
+from sklearn.pipeline import Pipeline
 
+from src.builders.pipeline_builder import (TransformerBuilder,
+                                           TransformerPipelineBuilder)
 from src.conf.schema import TransformersConfig
 from src.evaluation.metrics import compute_scores_mean
 from src.params.grid import ParamGrid
 
-from .types import EvaluationResult, RunnerResult, TransformersDict
+from .types import EvaluationResult, RunnerResult
 
 
 class BaseRunner(ABC):
@@ -62,7 +62,9 @@ class CrossValidationRunner(BaseRunner):
         """
         Performs cross-validation on the given estimator using the configuration provided.
         """
-        return list(cross_val_score(estimator, X_train, y_train, cv=self.cv, scoring="r2"))
+        return list(
+            cross_val_score(estimator, X_train, y_train, cv=self.cv, scoring="r2")
+        )
 
     @staticmethod
     def fit_estimator(
@@ -151,32 +153,8 @@ class GridSearchRunner(BaseRunner):
 
 
 class TargetTransformer:
-    TRANSFORMERS: TransformersDict = {
-        "log": FunctionTransformer(np.log, inverse_func=np.exp),
-        "quantile": QuantileTransformer(output_distribution="normal", n_quantiles=100),
-        "none": None,
-    }
-
     def __init__(self, cfg_transform: TransformersConfig):
         self.cfg_transform = cfg_transform
-
-    @classmethod
-    def get(cls, name: str) -> BaseEstimator | None:
-        """
-        Maps a string name to a scikit-learn transformer.
-        """
-        return cls.TRANSFORMERS.get(name)
-
-    @staticmethod
-    def build_wrapper_pipeline(
-        pipeline: Pipeline, transformer: BaseEstimator | None
-    ) -> BaseEstimator:
-        """
-        Wraps the pipeline in TransformedTargetRegressor if transformer is provided.
-        """
-        if transformer is None:
-            return pipeline
-        return TransformedTargetRegressor(regressor=pipeline, transformer=transformer)
 
     @staticmethod
     def prepare_param_grid(
@@ -198,8 +176,9 @@ class TargetTransformer:
         Generates pipelines with target transformations and updated param grid.
         """
         for transformation, value in self.cfg_transform.to_dict().items():
-            transformer = TargetTransformer.get(transformation)
-            estimator = self.build_wrapper_pipeline(pipeline, transformer)
+
+            transformer = TransformerBuilder.build(name=transformation)
+            estimator = TransformerPipelineBuilder.build(pipeline, transformer)
 
             if transformer is not None:
                 params = value.params
