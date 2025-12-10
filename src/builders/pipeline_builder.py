@@ -1,100 +1,14 @@
-import inspect
 from typing import Any
 
 from sklearn.base import BaseEstimator
-from sklearn.compose import ColumnTransformer, TransformedTargetRegressor
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from src.conf.schema import FeaturesConfig, StageConfig
+from src.conf.schema import StageConfig
 from src.models.registry import get_model_class_and_short
-from src.models.transformers import get_transformer
 
-
-class PreprocessorBuilder:
-    @staticmethod
-    def build(preprocess_num_features: bool, cfg: FeaturesConfig) -> ColumnTransformer:
-        """
-        Builds a ColumnTransformer for feature preprocessing.
-        """
-        if preprocess_num_features:
-            return ColumnTransformer(
-                [
-                    ("num", StandardScaler(), cfg.numeric),
-                    ("bin", "passthrough", cfg.binary),
-                    (
-                        "cat",
-                        OneHotEncoder(
-                            drop="first", sparse_output=False, handle_unknown="ignore"
-                        ),
-                        cfg.categorical,
-                    ),
-                ]
-            )
-        else:
-            return ColumnTransformer(
-                [
-                    (
-                        "cat",
-                        OneHotEncoder(handle_unknown="ignore"),
-                        cfg.categorical,
-                    ),
-                    (
-                        "rest",
-                        "passthrough",
-                        cfg.numeric + cfg.binary,
-                    ),
-                ]
-            )
-
-
-class ModelPipelineBuilder:
-    @staticmethod
-    def build(
-        preprocessor: ColumnTransformer,
-        model: type[BaseEstimator],
-        params: dict[str, Any] | None = None,
-    ) -> Pipeline:
-        """
-        Builds a pipeline consisting of a preprocessor and a model.
-        """
-        params = params or {}
-
-        signature = inspect.signature(model.__init__)
-        if "random_state" in signature.parameters:
-            params.setdefault("random_state", 42)
-
-        return Pipeline(
-            [
-                ("preprocessor", preprocessor),
-                ("model", model(**params)),
-            ]
-        )
-
-
-class TransformerBuilder:
-    @staticmethod
-    def build(name: str, params: dict[str, Any] | None = None) -> BaseEstimator:
-        """
-        Builds a target transformer instance.
-        """
-        transformer = get_transformer(name=name)
-
-        if params:
-            transformer.set_params(**params)
-
-        return transformer
-
-
-class TransformerPipelineBuilder:
-    @staticmethod
-    def build(
-        pipeline: Pipeline, transformer: BaseEstimator
-    ) -> TransformedTargetRegressor:
-        """
-        Wraps a pipeline in a TransformedTargetRegressor using the provided transformer.
-        """
-        return TransformedTargetRegressor(regressor=pipeline, transformer=transformer)
+from .preprocessor_builder import PreprocessorBuilder
+from .model_pipeline_builder import ModelPipelineBuilder
+from .transformer_builder import TransformerBuilder
+from .transformer_pipeline_builder import TransformerPipelineBuilder
 
 
 class PipelineBuilder:
