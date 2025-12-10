@@ -7,7 +7,8 @@ from src.training.train import TrainModel
 from src.training.tuning import (CrossValidationRunner, GridSearchRunner,
                                  TargetTransformer)
 
-from .pipeline_builder import ModelPipelineBuilder, PreprocessorBuilder
+from .model_pipeline_builder import ModelPipelineBuilder
+from .preprocessor_builder import PreprocessorBuilder
 
 
 class TrainingBuilder:
