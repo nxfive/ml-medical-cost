@@ -3,7 +3,7 @@ from sklearn.compose import TransformedTargetRegressor
 from sklearn.pipeline import Pipeline
 
 
-class TransformerPipelineBuilder:
+class TransformerWrapperBuilder:
     @staticmethod
     def build(
         pipeline: Pipeline, transformer: BaseEstimator
