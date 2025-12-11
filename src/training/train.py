@@ -6,9 +6,11 @@ from sklearn.pipeline import Pipeline
 
 from src.conf.schema import (CVConfig, FeaturesConfig, ModelConfig,
                              TransformersConfig)
+from src.tuning.runners import CrossValidationRunner, GridSearchRunner
+from src.tuning.transformers import TargetTransformer
+from src.tuning.types import EvaluationResult, RunnerResult
 
-from .tuning import CrossValidationRunner, GridSearchRunner, TargetTransformer
-from .types import EvaluationResult, RunnerResult, TrainResult
+from .types import TrainResult
 
 
 class TrainModel:
