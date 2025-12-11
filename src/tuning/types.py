@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TypeVar
+from typing import TypedDict, TypeVar
 
 import numpy as np
 from sklearn.base import BaseEstimator
@@ -25,3 +25,9 @@ class EvaluationResult:
     estimator: BaseEstimator
     param_grid: dict[str, list]
     transformation: str = "none"
+
+
+class TransformersDict(TypedDict):
+    log: BaseEstimator
+    quantile: BaseEstimator
+    none: None
