@@ -22,6 +22,7 @@ class ConvertConfig:
 class CVConfig(ConvertConfig):
     n_splits: int
     shuffle: bool
+    scoring: str
     random_state: int | None = None
 
 
