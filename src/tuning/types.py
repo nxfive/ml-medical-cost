@@ -3,6 +3,7 @@ from typing import TypedDict, TypeVar
 
 import numpy as np
 from sklearn.base import BaseEstimator
+from sklearn.pipeline import FunctionTransformer
 
 RunnerType = TypeVar("RunnerType", bound=BaseEstimator)
 
@@ -28,6 +29,7 @@ class EvaluationResult:
 
 
 class TransformersDict(TypedDict):
-    log: BaseEstimator
-    quantile: BaseEstimator
+    log: FunctionTransformer
+    sqrt: FunctionTransformer
+    square: FunctionTransformer
     none: None
