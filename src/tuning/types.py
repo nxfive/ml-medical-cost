@@ -1,7 +1,10 @@
 from dataclasses import dataclass
+from typing import TypeVar
 
 import numpy as np
 from sklearn.base import BaseEstimator
+
+RunnerType = TypeVar("RunnerType", bound=BaseEstimator)
 
 
 @dataclass
