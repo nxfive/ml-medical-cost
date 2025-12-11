@@ -1,11 +1,11 @@
 import numpy as np
 from sklearn.pipeline import FunctionTransformer
-from sklearn.preprocessing import QuantileTransformer
 
-from src.training.types import TransformersDict
+from src.tuning.types import TransformersDict
 
 TRANSFORMERS: TransformersDict = {
     "log": FunctionTransformer(np.log, inverse_func=np.exp),
-    "quantile": QuantileTransformer(output_distribution="normal", n_quantiles=100),
+    "sqrt": FunctionTransformer(np.sqrt, inverse_func=np.square),
+    "square": FunctionTransformer(np.square, inverse_func=np.sqrt),
     "none": None,
 }
