@@ -9,28 +9,24 @@ from .base_runner import BaseRunner
 
 
 class CrossValidationRunner(BaseRunner):
-    def __init__(self, cv: KFold):
+    def __init__(self, cv: KFold, scoring: str = "r2"):
         self.cv = cv
+        self.scoring = scoring
 
-    def perform_cross_validation(
-        self, estimator: BaseEstimator, X_train: pd.DataFrame, y_train: pd.Series
+    def _perform_cross_validation(
+        self,
+        estimator: BaseEstimator,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
     ) -> list[np.float64]:
         """
         Performs cross-validation on the given estimator using the configuration provided.
         """
         return list(
-            cross_val_score(estimator, X_train, y_train, cv=self.cv, scoring="r2")
+            cross_val_score(
+                estimator, X_train, y_train, cv=self.cv, scoring=self.scoring
+            )
         )
-
-    @staticmethod
-    def fit_estimator(
-        estimator: BaseEstimator, X_train: pd.DataFrame, y_train: pd.Series
-    ) -> BaseEstimator:
-        """
-        Fits the given estimator on the training data.
-        """
-        estimator.fit(X_train, y_train)
-        return estimator
 
     def run(
         self,
@@ -43,7 +39,7 @@ class CrossValidationRunner(BaseRunner):
         Performs cross-validation, fits the estimator and generates predictions for train and
         test sets.
         """
-        folds_scores = self.perform_cross_validation(estimator, X_train, y_train)
+        folds_scores = self._perform_cross_validation(estimator, X_train, y_train)
         trained = self.fit_estimator(estimator, X_train, y_train)
 
         return self._collect_results(trained, folds_scores, X_train, X_test)
