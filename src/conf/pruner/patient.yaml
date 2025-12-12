@@ -1,0 +1,4 @@
+name: patient
+params:
+  patience: 5
+  min_delta: 0.0
