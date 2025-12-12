@@ -1,29 +1,22 @@
-from dataclasses import dataclass
 from pathlib import Path
 
 from omegaconf import DictConfig, OmegaConf
 from sklearn.base import BaseEstimator
 
-from src.conf.schema import OptunaStageConfig
+from src.conf.schema import OptunaStageConfig, TrainingDir
 from src.data.core import DataLoader
 from src.factories.io_factory import IOFactory
-from src.factories.optuna_factory import OptunaConfigFactory, TrainingDir
+from src.factories.model_factory import ModelFactory
+from src.factories.optuna_config_factory import OptunaConfigFactory
 from src.io.file_ops import PathManager
 from src.models.loaders.run_loader import RunLoader
-from src.models.registry import get_model_class_and_short
 from src.models.selection import BestRunSelector
 from src.patterns.base_pipeline import BasePipeline
 
 from .types import DynamicConfig, LoadedModelResults, ModelRun
 
 
-@dataclass
-class OptunaBaseResult:
-    static_config: OptunaStageConfig
-    model_run: ModelRun
-
-
-class OptunaBasePipeline(BasePipeline[RunLoader, OptunaBaseResult]):
+class OptunaBasePipeline(BasePipeline[RunLoader, OptunaStageConfig]):
     def __init__(self, dynamic_cfg: DictConfig):
         self.cfg = dynamic_cfg
 
@@ -69,19 +62,21 @@ class OptunaBasePipeline(BasePipeline[RunLoader, OptunaBaseResult]):
             data_loader=DataLoader(readers),
         )
 
-    def run(self) -> OptunaBaseResult:
+    def run(self) -> OptunaStageConfig:
         """
         Builds loaders, selects best run, and creates full stage config.
         """
         run_loader = self.build()
         best_run = self.select_best_run(run_loader)
-        model_class, short = get_model_class_and_short(best_run.result.model_name)
+        model_spec = ModelFactory.get_spec(best_run.result.model_name)
 
         dc = DynamicConfig(
-            model=OmegaConf.load(f"src/conf/model/{short}.yaml"),
-            optuna_model=OmegaConf.load(f"src/conf/optuna/{short}.yaml"),
+            model=OmegaConf.load(f"src/conf/model/{model_spec.alias}.yaml"),
+            optuna_model=OmegaConf.load(f"src/conf/optuna/{model_spec.alias}.yaml"),
+            patient=(
+                OmegaConf.load(f"src/conf/pruner/patient.yaml")
+                if self.cfg.patience
+                else None
+            ),
         )
-        return OptunaBaseResult(
-            static_config=self.load_optuna_config(model_class, dynamic_cfg=dc),
-            model_run=best_run,
-        )
+        return self.load_optuna_config(model_spec.model_class, dynamic_cfg=dc)
