@@ -5,6 +5,9 @@ defaults:
   - cv: default
   - transform: default
   - optuna: linear
+  - pruner: median
+
+patience: null
 
 project_name: ml-medical-cost
 
