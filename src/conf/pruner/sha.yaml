@@ -1,0 +1,6 @@
+name: sha
+params:
+  min_resource: 1
+  reduction_factor: 4
+  min_early_stopping_rate: 0
+  bootstrap_count: 0
