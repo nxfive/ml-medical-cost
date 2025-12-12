@@ -11,6 +11,10 @@ class DirectOptunaRunner(BaseExperimentRunner[RunnerResult]):
         self.study = study
 
     def run(self, context: ExperimentContext) -> RunnerResult:
+        """
+        Builds the experiment setup from the provided context and runs cross-validation
+        with the configured pipeline and parameters.
+        """
         exp_setup = self.build(exp_config=context.to_experiment_config())
         search_runner = OptunaRunnerFactory.create_direct_runner(
             cv_cfg=context.cv_cfg, optuna_cfg=context.optuna_cfg, study=self.study
