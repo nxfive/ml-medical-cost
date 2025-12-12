@@ -1,0 +1,5 @@
+name: hyperband
+params:
+  min_resource: 1
+  max_resource: null
+  reduction_factor: 3
