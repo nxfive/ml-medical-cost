@@ -82,6 +82,12 @@ class TransformersConfig(ConvertConfig):
 
 
 @dataclass
+class PrunerConfig(ConvertConfig):
+    name: str
+    params: dict[str, Any]
+
+
+@dataclass
 class DataDir:
     root_dir: Path
     raw_dir: Path
@@ -144,6 +150,5 @@ class OptunaStageConfig:
     features: FeaturesConfig
     cv: CVConfig
     transformers: TransformersConfig
-
-
-StageConfig = TrainingStageConfig | OptunaStageConfig
+    pruner: PrunerConfig
+    patient: PrunerConfig | None = None
