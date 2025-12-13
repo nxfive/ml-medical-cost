@@ -3,7 +3,7 @@ from sklearn.base import BaseEstimator
 
 from src.conf.schema import (CVConfig, DataDir, FeaturesConfig, ModelConfig,
                              ModelsDir, OptunaConfig, OptunaModelConfig,
-                             OptunaStageConfig, TrainingDir,
+                             OptunaStageConfig, PrunerConfig, TrainingDir,
                              TransformersConfig)
 from src.optuna.types import DynamicConfig
 
@@ -30,8 +30,12 @@ class OptunaConfigFactory:
         optuna_model_cfg = OptunaModelConfig.from_omegaconf(
             dynamic_cfg.optuna_model.model
         )
-
         model_cfg.model_class = model_class
+        pruner_cfg = PrunerConfig.from_omegaconf(cfg.pruner)
+
+        patient_cfg = None
+        if dynamic_cfg.patient:
+            patient_cfg = PrunerConfig.from_omegaconf(dynamic_cfg.patient)
 
         return OptunaStageConfig(
             data_dir=DataDir(**cfg.data),
@@ -43,4 +47,6 @@ class OptunaConfigFactory:
             features=features_cfg,
             cv=cv_cfg,
             transformers=transform_cfg,
+            pruner=pruner_cfg,
+            patient=patient_cfg,
         )
