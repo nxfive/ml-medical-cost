@@ -1,47 +1,43 @@
-from typing import Any
-
 from sklearn.base import BaseEstimator
 
-from src.conf.schema import StageConfig
-from src.models.registry import get_model_class_and_short
+from src.conf.schema import FeaturesConfig, ModelConfig
+from src.factories.model_factory import ModelFactory
+from src.factories.transformer_factory import TargetTransformerFactory
 
-from .preprocessor_builder import PreprocessorBuilder
 from .model_pipeline_builder import ModelPipelineBuilder
-from .transformer_builder import TransformerBuilder
-from .transformer_pipeline_builder import TransformerPipelineBuilder
+from .preprocessor_builder import PreprocessorBuilder
+from .transformer_wrapper_builder import TransformerWrapperBuilder
 
 
 class PipelineBuilder:
     @staticmethod
     def build(
-        stage_cfg: StageConfig,
-        model_params: dict[str, Any] | None = None,
-        transformer_params: dict[str, Any] | None = None,
+        model_cfg: ModelConfig,
+        features_cfg: FeaturesConfig,
         transformation: str = "none",
     ) -> BaseEstimator:
         """
         Builds a complete pipeline with optional target transformation for a stage.
         """
-        model_class, _ = get_model_class_and_short(name=stage_cfg.model.name)
+        model_spec = ModelFactory.get_spec(name_or_alias=model_cfg.name)
 
         preprocessor = PreprocessorBuilder.build(
-            preprocess_num_features=stage_cfg.model.preprocess_num_features,
-            cfg=stage_cfg.features,
+            preprocess_num_features=model_cfg.preprocess_num_features,
+            cfg=features_cfg,
         )
 
         pipeline = ModelPipelineBuilder.build(
             preprocessor=preprocessor,
-            model=model_class,
-            params=model_params,
+            model=model_spec.model_class,
         )
 
-        if not stage_cfg.model.target_transformations or transformation == "none":
+        if not model_cfg.target_transformations:
             return pipeline
 
-        transformer = TransformerBuilder.build(
-            name=transformation, params=transformer_params
+        transformer = TargetTransformerFactory.create(
+            transformation=transformation,
         )
 
-        return TransformerPipelineBuilder.build(
+        return TransformerWrapperBuilder.build(
             pipeline=pipeline, transformer=transformer
         )
