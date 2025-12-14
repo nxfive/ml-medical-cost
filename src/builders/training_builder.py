@@ -1,13 +1,13 @@
 from sklearn.base import BaseEstimator
 
 from src.conf.schema import TrainingStageConfig
-from src.params.grid import ParamGrid
 from src.training.cv import get_cv
 from src.training.train import TrainModel
-from src.training.tuning import (CrossValidationRunner, GridSearchRunner,
-                                 TargetTransformer)
+from src.tuning.runners import CrossValidationRunner, GridSearchRunner
+from src.tuning.transformers import TargetTransformer
 
 from .model_pipeline_builder import ModelPipelineBuilder
+from .pipeline_grid_builder import PipelineGridBuilder
 from .preprocessor_builder import PreprocessorBuilder
 
 
@@ -28,7 +28,7 @@ class TrainingBuilder:
             model=model_class,
         )
 
-        param_grid = ParamGrid.create(cfg.model.params)
+        param_grid = PipelineGridBuilder.build(model_params=cfg.model.params)
 
         grid_runner = GridSearchRunner(cv=cv)
         cross_runner = CrossValidationRunner(cv=cv)
