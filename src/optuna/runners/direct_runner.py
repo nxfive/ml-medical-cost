@@ -1,14 +1,14 @@
 import optuna
-from src.factories.optuna_runner_factory import OptunaRunnerFactory
 from src.optuna.types import ExperimentContext
+from src.tuning.runners import OptunaSearchRunner
 from src.tuning.types import RunnerResult
 
 from .base import BaseExperimentRunner
 
 
 class DirectOptunaRunner(BaseExperimentRunner[RunnerResult]):
-    def __init__(self, study: optuna.Study):
-        self.study = study
+    def __init__(self, runner: OptunaSearchRunner):
+        self.runner = runner
 
     def run(self, context: ExperimentContext) -> RunnerResult:
         """
@@ -16,10 +16,8 @@ class DirectOptunaRunner(BaseExperimentRunner[RunnerResult]):
         with the configured pipeline and parameters.
         """
         exp_setup = self.build(exp_config=context.to_experiment_config())
-        search_runner = OptunaRunnerFactory.create_direct_runner(
-            cv_cfg=context.cv_cfg, optuna_cfg=context.optuna_cfg, study=self.study
-        )
-        return search_runner.run(
+
+        return self.runner.run(
             estimator=exp_setup.pipeline,
             param_grid=exp_setup.params,
             X_train=context.X_train,
