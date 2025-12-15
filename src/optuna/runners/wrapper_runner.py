@@ -1,16 +1,17 @@
 import numpy as np
 
 import optuna
-from src.factories.optuna_runner_factory import OptunaRunnerFactory
 from src.optuna.tuning import OptunaOptimize
 from src.optuna.types import ExperimentContext
+from src.tuning.runners import CrossValidationRunner
 
 from .base import BaseExperimentRunner
 
 
 class WrapperOptunaRunner(BaseExperimentRunner[optuna.Study]):
-    def __init__(self, optimizer: OptunaOptimize):
+    def __init__(self, optimizer: OptunaOptimize, runner: CrossValidationRunner):
         self.optimizer = optimizer
+        self.runner = runner
 
     def objective(self, trial: optuna.Trial, context: ExperimentContext) -> np.float64:
         """
@@ -23,13 +24,10 @@ class WrapperOptunaRunner(BaseExperimentRunner[optuna.Study]):
             exp_config=context.to_experiment_config(),
             trial=trial,
         )
-        search_runner = OptunaRunnerFactory.create_wrapper_runner(
-            cv_cfg=context.cv_cfg, study=self.optimizer.study
-        )
+        exp_setup.pipeline.set_params(**exp_setup.params)
 
-        result = search_runner.run(
+        result = self.runner.run(
             estimator=exp_setup.pipeline,
-            param_grid=exp_setup.params,
             X_train=context.X_train,
             X_test=context.X_test,
             y_train=context.y_train,
