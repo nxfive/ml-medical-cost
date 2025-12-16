@@ -62,22 +62,22 @@ class SingleTransformerConfig(ConvertConfig):
 @dataclass
 class TransformersConfig(ConvertConfig):
     log: SingleTransformerConfig
+    power: SingleTransformerConfig
     none: SingleTransformerConfig
-    quantile: SingleTransformerConfig
 
     def to_dict(self) -> dict[str, SingleTransformerConfig]:
         return {
             "log": self.log,
+            "power": self.power,
             "none": self.none,
-            "quantile": self.quantile,
         }
 
     @classmethod
     def from_omegaconf(cls, cfg: DictConfig) -> TransformersConfig:
         return cls(
             log=SingleTransformerConfig.from_omegaconf(cfg.log),
+            power=SingleTransformerConfig.from_omegaconf(cfg.power),
             none=SingleTransformerConfig.from_omegaconf(cfg.none),
-            quantile=SingleTransformerConfig.from_omegaconf(cfg.quantile),
         )
 
 
