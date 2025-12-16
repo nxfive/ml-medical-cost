@@ -11,7 +11,7 @@ class OptunaSpaceBuilder:
         optuna_params: dict[str, Any], model_params: dict[str, list]
     ) -> dict[str, Any]:
         """
-        Builds an Optuna search space by validating inputs, filling missing parameter values, 
+        Builds an Optuna search space by validating inputs, filling missing parameter values,
         converting them to Optuna distributions, and applying pipeline namespaces.
         """
         ParamValidator.validate_optuna(optuna_params)
@@ -20,4 +20,4 @@ class OptunaSpaceBuilder:
             model_params=model_params, optuna_params=optuna_params
         )
 
-        return OptunaGrid(params).create_optuna_space()
+        return OptunaGrid.create_optuna_space(params)
