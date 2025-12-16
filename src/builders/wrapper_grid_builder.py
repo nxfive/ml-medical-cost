@@ -14,6 +14,6 @@ class WrapperGridBuilder:
         if transformer_params:
             ParamValidator.validate_grid(transformer_params)
 
-        return ParamGridPrefixer().prepare_wrapper_grid(
+        return ParamGridPrefixer.prepare_wrapper_grid(
             param_grid=param_grid, transformer_params=transformer_params
         )
