@@ -1,9 +1,11 @@
 log:
-  params: {}
+  params: 
+    validate: [true, false]
+
+power:
+  params:
+    method: ['box-cox', 'yeo-johnson']
+    standardize: [true, false]
 
 none:
   params: {}
-
-quantile:
-  params: 
-    n_quantiles: [100, 150, 200]
