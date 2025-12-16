@@ -9,4 +9,4 @@ class PipelineGridBuilder:
         Builds a validated parameter grid for pipeline models, applying necessary prefixes.
         """
         ParamValidator.validate_grid(model_params)
-        return ParamGridPrefixer().prepare_pipeline_grid(model_params)
+        return ParamGridPrefixer.prepare_pipeline_grid(model_params)
