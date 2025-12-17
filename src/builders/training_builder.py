@@ -40,9 +40,6 @@ class TrainingBuilder:
         return TrainModel(
             model=model_class,
             cfg_model=cfg.model,
-            cfg_features=cfg.features,
-            cfg_cv=cfg.cv,
-            cfg_transform=cfg.transformers,
             param_grid=param_grid,
             pipeline=pipeline,
             grid_runner=grid_runner,
