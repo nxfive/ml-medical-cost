@@ -1,39 +1,33 @@
 from typing import Any
 
+from .types import Prefixes
 
-class ParamGrid:
+
+class ParamGridPrefixer:
     @staticmethod
-    def create(params: dict) -> dict:
+    def prefix(params: dict[str, Any], step: Prefixes) -> dict[str, Any]:
         """
-        Creates param gird for model pipeline.
+        Adds the given step prefix to all parameter keys.
         """
-        if not params:
-            return {}
-        return ParamGrid.prefix(params, "model")
+        return {f"{step.value}{k}": v for k, v in params.items()}
 
-    @staticmethod
-    def prefix(params: dict, step_name: str) -> dict:
+    def prepare_pipeline_grid(self, model_params: dict[str, Any]) -> dict[str, Any]:
         """
-        Adds prefix to params for pipeline compatibility.
+        Prefixes model parameters so they can be used in a pipeline step.
         """
-        step_name = step_name.strip().strip("_")
-        return {f"{step_name}__{k}": v for k, v in params.items()}
+        return self.prefix(model_params, Prefixes.PIPELINE_MODEL)
 
-
-class OptunaParamUpdater:
-    @staticmethod
-    def update(
-        model_params: dict[str, Any], optuna_params: dict[str, Any]
+    def prepare_wrapper_grid(
+        self,
+        model_params: dict[str, Any] | None,
+        transformer_params: dict[str, Any] | None,
     ) -> dict[str, Any]:
         """
-        Updates model parameters with optimized values from Optuna results.
+        Merges model and transformer parameters with appropriate prefixes for a wrapper.
         """
-        updated_params = {}
-        for key, values in model_params.items():
-            for param_name, best_value in optuna_params.items():
-                if key.endswith(param_name):
-                    updated_params[key] = best_value
-                    break
-            else:
-                updated_params[key] = values[0] if isinstance(values, list) else values
-        return updated_params
+        grid = {}
+        if model_params:
+            grid |= self.prefix(model_params, Prefixes.WRAPPER_REGRESSOR)
+        if transformer_params:
+            grid |= self.prefix(transformer_params, Prefixes.WRAPPER_TRANSFORMER)
+        return grid
