@@ -1,13 +1,12 @@
 from sklearn.base import BaseEstimator
 
+from src.builders.pipeline.pipeline_builder import PipelineBuilder
+from src.builders.pipeline.pipeline_grid_builder import PipelineGridBuilder
 from src.conf.schema import TrainingStageConfig
 from src.training.cv import get_cv
 from src.training.train import TrainModel
 from src.tuning.runners import CrossValidationRunner, GridSearchRunner
 from src.tuning.transformers import TargetTransformer
-
-from .pipeline_builder import PipelineBuilder
-from .pipeline_grid_builder import PipelineGridBuilder
 
 
 class TrainingBuilder:

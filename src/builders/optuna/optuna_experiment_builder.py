@@ -1,9 +1,9 @@
 import optuna
+from src.builders.pipeline.pipeline_builder import PipelineBuilder
 from src.optuna.types import ExperimentSetup, OptunaExperimentConfig
 
 from .optuna_grid_distribution_builder import OptunaGridDistributionBuilder
 from .optuna_trial_grid_builder import OptunaTrialGridBuilder
-from .pipeline_builder import PipelineBuilder
 
 
 class OptunaExperimentBuilder:

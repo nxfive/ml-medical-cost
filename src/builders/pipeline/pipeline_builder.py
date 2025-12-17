@@ -1,12 +1,13 @@
 from sklearn.base import BaseEstimator
 
+from src.builders.transformer.transformer_wrapper_builder import \
+    TransformerWrapperBuilder
 from src.conf.schema import FeaturesConfig, ModelConfig
 from src.factories.model_factory import ModelFactory
 from src.factories.transformer_factory import TargetTransformerFactory
 
 from .model_pipeline_builder import ModelPipelineBuilder
 from .preprocessor_builder import PreprocessorBuilder
-from .transformer_wrapper_builder import TransformerWrapperBuilder
 
 
 class PipelineBuilder:
