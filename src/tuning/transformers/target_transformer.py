@@ -2,28 +2,19 @@ from typing import Generator
 
 from sklearn.pipeline import Pipeline
 
-from src.builders import TransformerBuilder, TransformerPipelineBuilder
+from src.builders.transformer.transformer_wrapper_builder import \
+    TransformerWrapperBuilder
+from src.builders.transformer.wrapper_grid_builder import WrapperGridBuilder
 from src.conf.schema import TransformersConfig
-from src.params.grid import ParamGrid
+from src.factories.transformer_factory import TargetTransformerFactory
 from src.tuning.types import EvaluationResult
+
+from .registry import TRANSFORMERS
 
 
 class TargetTransformer:
     def __init__(self, cfg_transform: TransformersConfig):
         self.cfg_transform = cfg_transform
-
-    @staticmethod
-    def prepare_param_grid(
-        param_grid: dict[str, list], params: dict[str, list]
-    ) -> dict[str, list]:
-        """
-        Merges base param grid with transformer parameters.
-        """
-        grid_copy = param_grid.copy() if param_grid else {}
-        grid_copy = ParamGrid.prefix(grid_copy, "regressor")
-        if params:
-            grid_copy.update(ParamGrid.prefix(params, "transformer"))
-        return grid_copy
 
     def evaluate(
         self, pipeline: Pipeline, param_grid: dict[str, list]
@@ -31,19 +22,24 @@ class TargetTransformer:
         """
         Generates pipelines with target transformations and updated param grid.
         """
-        for transformation, value in self.cfg_transform.to_dict().items():
+        for transformation in self.cfg_transform.to_dict():
 
-            transformer = TransformerBuilder.build(name=transformation)
-            estimator = TransformerPipelineBuilder.build(pipeline, transformer)
+            if TRANSFORMERS[transformation].is_identity:
+                yield EvaluationResult(estimator=pipeline, param_grid=param_grid)
 
-            if transformer is not None:
-                params = value.params
-                local_param_grid = self.prepare_param_grid(param_grid, params)
             else:
-                local_param_grid = param_grid
+                transformer = TargetTransformerFactory.create(
+                    transformation=transformation
+                )
+                wrapper = TransformerWrapperBuilder.build(
+                    pipeline=pipeline, transformer=transformer
+                )
+                wrapper_grid = WrapperGridBuilder.build(
+                    param_grid=param_grid, transformer_params=None
+                )
 
-            yield EvaluationResult(
-                estimator=estimator,
-                param_grid=local_param_grid,
-                transformation=transformation,
-            )
+                yield EvaluationResult(
+                    estimator=wrapper,
+                    param_grid=wrapper_grid,
+                    transformation=transformation,
+                )
