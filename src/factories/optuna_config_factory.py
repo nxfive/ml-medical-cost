@@ -5,7 +5,7 @@ from src.conf.schema import (CVConfig, DataDir, FeaturesConfig, ModelConfig,
                              ModelsDir, OptunaConfig, OptunaModelConfig,
                              OptunaStageConfig, PrunerConfig, TrainingDir,
                              TransformersConfig)
-from src.optuna.types import DynamicConfig
+from src.dto.config import DynamicConfig
 
 
 class OptunaConfigFactory:
