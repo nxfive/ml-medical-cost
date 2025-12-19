@@ -1,5 +1,5 @@
 from src.models.registry import MODELS
-from src.models.types import ModelSpec
+from src.models.spec import ModelSpec
 
 
 class ModelFactory:
