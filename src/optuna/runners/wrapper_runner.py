@@ -1,8 +1,8 @@
 import numpy as np
 
 import optuna
+from src.containers.experiment import ExperimentContext
 from src.optuna.tuning import OptunaOptimize
-from src.optuna.types import ExperimentContext
 from src.tuning.runners import CrossValidationRunner
 
 from .base import BaseExperimentRunner

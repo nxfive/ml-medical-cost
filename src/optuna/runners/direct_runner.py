@@ -1,7 +1,6 @@
-import optuna
-from src.optuna.types import ExperimentContext
+from src.containers.experiment import ExperimentContext
+from src.containers.results import RunnerResult
 from src.tuning.runners import OptunaSearchRunner
-from src.tuning.types import RunnerResult
 
 from .base import BaseExperimentRunner
 
