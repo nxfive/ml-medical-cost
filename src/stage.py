@@ -2,8 +2,9 @@ from importlib import import_module
 
 from omegaconf import DictConfig
 
+from src.dto.config import StageConfigMap
+
 from .config_loader import load_stage_configs
-from .types import StageConfigMap
 
 STAGE_MODULES = {
     "data": "src.data.run",
