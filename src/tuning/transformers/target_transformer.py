@@ -6,8 +6,8 @@ from src.builders.transformer.transformer_wrapper_builder import \
     TransformerWrapperBuilder
 from src.builders.transformer.wrapper_grid_builder import WrapperGridBuilder
 from src.conf.schema import TransformersConfig
+from src.containers.results import EvaluationResult
 from src.factories.transformer_factory import TargetTransformerFactory
-from src.tuning.types import EvaluationResult
 
 from .registry import TRANSFORMERS
 
