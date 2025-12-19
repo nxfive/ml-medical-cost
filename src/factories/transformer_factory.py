@@ -1,5 +1,3 @@
-from typing import Any
-
 from sklearn.base import TransformerMixin
 
 from src.tuning.transformers.registry import TRANSFORMERS
