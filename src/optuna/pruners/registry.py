@@ -1,8 +1,7 @@
 import optuna
+from optuna.pruners import BasePruner
 
-from .types import PrunersDict
-
-PRUNERS: PrunersDict = {
+PRUNERS: dict[str, BasePruner] = {
     "median": optuna.pruners.MedianPruner,
     "hyperband": optuna.pruners.HyperbandPruner,
     "nop": optuna.pruners.NopPruner,
