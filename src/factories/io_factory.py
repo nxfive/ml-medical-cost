@@ -1,5 +1,5 @@
+from src.containers.io import Readers, Writers
 from src.io.readers import CSVReader, JoblibReader, ParquetReader, YamlReader
-from src.io.types import Readers, Writers
 from src.io.writers import JoblibWriter, ParquetWriter, YamlWriter
 
 
