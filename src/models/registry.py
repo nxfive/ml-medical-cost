@@ -3,7 +3,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
 
-from .types import ModelSpec
+from .spec import ModelSpec
 
 MODELS: dict[str, ModelSpec] = {
     "RandomForestRegressor": ModelSpec(RandomForestRegressor, "rf"),
