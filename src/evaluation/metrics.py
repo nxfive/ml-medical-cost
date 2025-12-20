@@ -4,7 +4,8 @@ import numpy as np
 from sklearn.metrics import (mean_absolute_error, r2_score,
                              root_mean_squared_error)
 
-from .types import AllMetrics, SplitMetrics, YType
+from src.containers.types import YType
+from src.dto.metrics import AllMetrics, SplitMetrics
 
 
 def compute_scores_mean(fold_scores: list[np.float64]) -> np.float64:
