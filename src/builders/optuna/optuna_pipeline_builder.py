@@ -1,12 +1,12 @@
 import optuna
 from src.conf.schema import OptunaStageConfig
+from src.containers.builder import OptunaBuildResult
 from src.data.core import DataLoader, DataSaver
 from src.factories.io_factory import IOFactory
 from src.factories.pruner_factory import PrunerFactory
 from src.io.file_ops import PathManager
 from src.models.savers.model_saver import ModelSaver
 from src.optuna.tuning import OptunaOptimize
-from src.optuna.types import OptunaBuildResult
 from src.training.cv import get_cv
 from src.tuning.runners import CrossValidationRunner, OptunaSearchRunner
 
@@ -41,7 +41,7 @@ class OptunaPipelineBuilder:
             cfg_pruner=self.cfg.pruner, cfg_patient=self.cfg.patient
         )
         return OptunaOptimize(
-            optuna_cfg=self.cfg.optuna,
+            optuna_cfg=self.cfg.optuna_config,
             pruner=pruner,
         )
 
@@ -54,11 +54,10 @@ class OptunaPipelineBuilder:
         cv = get_cv(self.cfg.cv)
         cross_runner = CrossValidationRunner(cv=cv, scoring=self.cfg.cv.scoring)
         search_runner = OptunaSearchRunner(
+            optuna_cfg=self.cfg.optuna_config,
             study=study,
             cv=cv,
             scoring=self.cfg.cv.scoring,
-            trials=self.cfg.optuna_config.trials,
-            timeout=self.cfg.optuna_config.timeout,
         )
         return cross_runner, search_runner
 
@@ -76,7 +75,7 @@ class OptunaPipelineBuilder:
         cross_runner, search_runner = self._build_runners(study=optimizer.study)
 
         return OptunaBuildResult(
-            loader=data_loader,
+            data_loader=data_loader,
             model_saver=model_saver,
             optimizer=optimizer,
             cross_runner=cross_runner,
