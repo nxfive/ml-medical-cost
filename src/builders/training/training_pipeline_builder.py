@@ -1,14 +1,14 @@
 from sklearn.base import BaseEstimator
 
 from src.conf.schema import TrainingStageConfig
+from src.containers.builder import TrainingBuildResult
 from src.data.core import DataLoader, DataSaver
 from src.factories.io_factory import IOFactory
 from src.factories.model_factory import ModelFactory
 from src.io.file_ops import PathManager
 from src.models.savers.run_saver import RunSaver
-from src.models.types import ModelSpec
+from src.models.spec import ModelSpec
 from src.training.train import TrainModel
-from src.training.types import TrainingBuildResult
 
 from .training_builder import TrainingBuilder
 
