@@ -26,14 +26,14 @@ class PredictionResult:
 class RunnerResult(PredictionResult):
     folds_scores: list[np.float64]
     folds_scores_mean: np.float64
+    params: dict[str, Any]
 
 
 @dataclass
 class RunResult:
     runner_result: RunnerResult
     param_grid: dict[str, list]
-    transformation: str
-    params: dict[str, Any] | None
+    transformation: str = "none"
 
 
 @dataclass
@@ -50,7 +50,7 @@ class StageResult:
 
 @dataclass
 class LoadedModelResults:
-    runs: dict[str, RunResult]
+    runs: dict[str, StageResult]
 
 
 @dataclass
