@@ -1,7 +1,9 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from src.data.types import SplitData, SplitDataDict
+from src.containers.data import SplitData
+from src.containers.types import SplitDataDict
+from src.serializers.split_data import SplitDataSerializer
 
 
 def split_features_target(
@@ -24,9 +26,10 @@ def split_train_test(
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=test_size, random_state=random_state
     )
-    return SplitData(
+    split_data = SplitData(
         X_train=X_train,
         X_test=X_test,
         y_train=y_train,
         y_test=y_test,
-    ).to_dict()
+    )
+    return SplitDataSerializer.to_dict(split_data)
