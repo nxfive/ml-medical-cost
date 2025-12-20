@@ -1,7 +1,7 @@
 import optuna
 from src.conf.schema import CVConfig, OptunaConfig
 from src.training.cv import get_cv
-from src.tuning.runners import OptunaSearchRunner
+from src.tuning.runners import CrossValidationRunner, OptunaSearchRunner
 
 
 class OptunaRunnerFactory:
@@ -11,10 +11,10 @@ class OptunaRunnerFactory:
     Provides methods to create either a wrapper runner or a direct runner
     with appropriate CV and study configuration.
     """
+
     @staticmethod
-    def create_wrapper_runner(cv_cfg: CVConfig, study: optuna.Study):
-        return OptunaSearchRunner(
-            study=study,
+    def create_wrapper_runner(cv_cfg: CVConfig):
+        return CrossValidationRunner(
             cv=get_cv(cv_cfg),
             scoring=cv_cfg.scoring,
         )
