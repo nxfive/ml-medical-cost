@@ -4,12 +4,14 @@ from typing import Any
 import pandas as pd
 from sklearn.base import BaseEstimator
 
+from src.containers.data import SplitData
+from src.containers.io import Readers, Writers
+from src.containers.types import SplitDataDict
 from src.io.file_ops import PathManager
-from src.io.types import Readers, Writers
+from src.serializers.split_data import SplitDataSerializer
 
 from .converters import CSVToParquetConverter
 from .download import DatasetDownloader
-from .types import SplitData, SplitDataDict
 
 
 class DataLoader:
@@ -25,7 +27,7 @@ class DataLoader:
             file: self.readers.parquet.read(processed_dir / f"{file}.parquet")
             for file in files
         }
-        return SplitData.from_dict(data)
+        return SplitDataSerializer.from_dict(data)
 
     def load_metrics(self, metrics_path: Path) -> dict[str, Any]:
         """
