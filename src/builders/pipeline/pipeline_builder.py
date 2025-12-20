@@ -5,6 +5,7 @@ from src.builders.transformer.transformer_wrapper_builder import \
 from src.conf.schema import FeaturesConfig, ModelConfig
 from src.factories.model_factory import ModelFactory
 from src.factories.transformer_factory import TargetTransformerFactory
+from src.tuning.transformers.registry import TRANSFORMERS
 
 from .model_pipeline_builder import ModelPipelineBuilder
 from .preprocessor_builder import PreprocessorBuilder
@@ -32,7 +33,7 @@ class PipelineBuilder:
             model=model_spec.model_class,
         )
 
-        if not model_cfg.target_transformations:
+        if TRANSFORMERS[transformation].is_identity:
             return pipeline
 
         transformer = TargetTransformerFactory.create(
