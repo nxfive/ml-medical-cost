@@ -1,7 +1,8 @@
 import numpy as np
 from sklearn.preprocessing import FunctionTransformer, PowerTransformer
 
-from src.tuning.types import IdentityTransformer, TransformerSpec
+from .identity import IdentityTransformer
+from .spec import TransformerSpec
 
 # NOTE:
 # Certain non-linear target transformations (e.g. sqrt, square) are intentionally excluded.
