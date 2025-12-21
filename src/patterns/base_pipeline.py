@@ -1,20 +1,31 @@
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import Generic
 
+import pandas as pd
+
+from src.containers.data import SplitData
+from src.containers.results import PredictionSet, StageResult
+from src.containers.types import BuildResultType, RunResultType
+from src.data.core import DataLoader
+from src.dto.metrics import AllMetrics
 from src.evaluation.metrics import get_metrics
-from src.evaluation.types import AllMetrics
-from src.patterns.types import PredictionSet
-
-B = TypeVar("B")
-T = TypeVar("T")
+from src.mlflow.logging import log_model
 
 
-class BasePipeline(ABC, Generic[B, T]):
+class BasePipeline(ABC, Generic[BuildResultType, RunResultType]):
     @abstractmethod
-    def build(self) -> B: ...
+    def build(self) -> BuildResultType: ...
 
     @abstractmethod
-    def run(self) -> T: ...
+    def run(self) -> RunResultType: ...
+
+    def load_data(self, data_loader: DataLoader) -> SplitData:
+        """
+        Loads preprocessed training and test data using the provided readers.
+        """
+        return data_loader.load_splitted_data(
+            processed_dir=self.cfg.data_dir.processed_dir
+        )
 
     @staticmethod
     def _compute_metrics(pred_set: PredictionSet) -> AllMetrics:
@@ -27,3 +38,12 @@ class BasePipeline(ABC, Generic[B, T]):
             train_predictions=pred_set.train_predictions,
             test_predictions=pred_set.test_predictions,
         )
+
+    @staticmethod
+    def _log_model(
+        stage_result: StageResult, X_train: pd.DataFrame, register: bool = False
+    ) -> None:
+        """
+        Logs the training results and metrics to MLflow.
+        """
+        log_model(result=stage_result, X_train=X_train, register=register)
