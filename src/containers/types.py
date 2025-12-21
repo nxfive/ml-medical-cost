@@ -17,6 +17,9 @@ RunResultType = TypeVar("RunResultType")
 """Type returned by perform_search() method of the search runner"""
 RunnerType = TypeVar("RunnerType", bound=BaseEstimator)
 
+"""Type returned by run() method of the base runner"""
+OptunaRunnerResult = TypeVar("OptunaRunnerResult")
+
 
 class SplitDataDict(TypedDict):
     X_train: pd.DataFrame
