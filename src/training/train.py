@@ -5,11 +5,9 @@ from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 
 from src.conf.schema import ModelConfig
+from src.containers.results import EvaluationResult, RunnerResult, RunResult
 from src.tuning.runners import CrossValidationRunner, GridSearchRunner
 from src.tuning.transformers import TargetTransformer
-from src.tuning.types import EvaluationResult, RunnerResult
-
-from .types import TrainResult
 
 
 class TrainModel:
@@ -75,7 +73,7 @@ class TrainModel:
         X_train: pd.DataFrame,
         X_test: pd.DataFrame,
         y_train: pd.Series,
-    ) -> Generator[TrainResult, None, None]:
+    ) -> Generator[RunResult, None, None]:
         """
         Runs training over all estimators (with optional target transformations)
         and performs either grid search or cross-validation.
@@ -84,7 +82,7 @@ class TrainModel:
             results = self.fit_estimator(
                 evaluation.estimator, evaluation.param_grid, X_train, X_test, y_train
             )
-            yield TrainResult(
+            yield RunResult(
                 runner_result=results,
                 param_grid=evaluation.param_grid,
                 transformation=evaluation.transformation,
