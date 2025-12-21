@@ -1,15 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import Generic
 
 import optuna
-from src.builders.optuna_experiment_builder import OptunaExperimentBuilder
-from src.optuna.types import (ExperimentContext, ExperimentSetup,
-                              OptunaExperimentConfig)
+from src.builders.optuna.optuna_experiment_builder import \
+    OptunaExperimentBuilder
+from src.containers.experiment import ExperimentContext, ExperimentSetup
+from src.containers.types import OptunaRunnerResult
+from src.dto.config import OptunaExperimentConfig
 
-ORR = TypeVar("OptunaRunnerResult")
 
-
-class BaseExperimentRunner(ABC, Generic[ORR]):
+class BaseExperimentRunner(ABC, Generic[OptunaRunnerResult]):
     def build(
         self, exp_config: OptunaExperimentConfig, trial: optuna.Trial | None = None
     ) -> ExperimentSetup:
@@ -23,4 +23,4 @@ class BaseExperimentRunner(ABC, Generic[ORR]):
         )
 
     @abstractmethod
-    def run(self, context: ExperimentContext) -> ORR: ...
+    def run(self, context: ExperimentContext) -> OptunaRunnerResult: ...
