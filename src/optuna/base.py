@@ -4,7 +4,9 @@ from omegaconf import DictConfig, OmegaConf
 from sklearn.base import BaseEstimator
 
 from src.conf.schema import OptunaStageConfig, TrainingDir
+from src.containers.results import LoadedModelResults, StageResult
 from src.data.core import DataLoader
+from src.dto.config import DynamicConfig
 from src.factories.io_factory import IOFactory
 from src.factories.model_factory import ModelFactory
 from src.factories.optuna_config_factory import OptunaConfigFactory
@@ -13,14 +15,12 @@ from src.models.loaders.run_loader import RunLoader
 from src.models.selection import BestRunSelector
 from src.patterns.base_pipeline import BasePipeline
 
-from .types import DynamicConfig, LoadedModelResults, ModelRun
-
 
 class OptunaBasePipeline(BasePipeline[RunLoader, OptunaStageConfig]):
     def __init__(self, dynamic_cfg: DictConfig):
         self.cfg = dynamic_cfg
 
-    def select_best_run(self, run_loader: RunLoader) -> ModelRun:
+    def select_best_run(self, run_loader: RunLoader) -> StageResult:
         """
         Selects the best model run from all loaded results.
         """
@@ -68,7 +68,7 @@ class OptunaBasePipeline(BasePipeline[RunLoader, OptunaStageConfig]):
         """
         run_loader = self.build()
         best_run = self.select_best_run(run_loader)
-        model_spec = ModelFactory.get_spec(best_run.result.model_name)
+        model_spec = ModelFactory.get_spec(best_run.model_name)
 
         dc = DynamicConfig(
             model=OmegaConf.load(f"src/conf/model/{model_spec.alias}.yaml"),
