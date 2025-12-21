@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import Any
 
-from sklearn.base import BaseEstimator
-
+from src.conf.schema import FeaturesConfig
+from src.containers.results import StageResult
 from src.data.core import DataSaver
 from src.io.file_ops import PathManager
+from src.serializers.model_metadata import ModelMetadataSerializer
 
 
 class ModelSaver:
@@ -13,14 +13,20 @@ class ModelSaver:
         self.data_saver = data_saver
 
     def save_model_with_metadata(
-        self, model: BaseEstimator, metadata: dict[str, Any]
+        self, result: StageResult, features: FeaturesConfig
     ) -> None:
         """
         Save model and metadata to disk using `model_name` as the base filename.
         """
-        file_name = metadata.get("model_name").lower()
+        file_name = result.model_name.lower()
         metadata_dir = self.models_dir / "metadata"
         PathManager.ensure_dir(metadata_dir)
 
-        self.data_saver.save_model(model, self.models_dir / f"{file_name}.pkl")
-        self.data_saver.save_metrics(metadata, metadata_dir / f"{file_name}.yml")
+        metadata = ModelMetadataSerializer.from_stage(result, features=features)
+        metadata_dict = ModelMetadataSerializer.to_dict(metadata)
+
+        model_path = self.models_dir / f"{file_name}.pkl"
+        metadata_path = metadata_dir / f"{file_name}.yml"
+
+        self.data_saver.save_model(result.estimator, model_path)
+        self.data_saver.save_metrics(metadata_dict, metadata_path)
