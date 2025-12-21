@@ -1,6 +1,10 @@
 from typing import Any
 
+from src.conf.schema import FeaturesConfig
 from src.containers.model import ModelMetadata
+from src.containers.results import StageResult
+
+from .sanitizer import sanitize_params
 
 
 class ModelMetadataSerializer:
@@ -15,6 +19,16 @@ class ModelMetadataSerializer:
                 "num_features": metadata.features.numeric,
                 "bin_features": metadata.features.binary,
             },
-            "params": metadata.params or {},
+            "params": sanitize_params(metadata.params) or {},
             "metrics": metadata.metrics,
         }
+
+    @staticmethod
+    def from_stage(result: StageResult, features: FeaturesConfig) -> ModelMetadata:
+        return ModelMetadata(
+            model_name=result.model_name,
+            features=features,
+            params=result.params,
+            param_grid=result.param_grid,
+            metrics=result.metrics,
+        )
