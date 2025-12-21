@@ -1,13 +1,15 @@
+from typing import Any
+
 from sklearn.base import BaseEstimator
 
 import optuna
-from src.builders.pipeline_builder import PipelineBuilder
+from src.builders.pipeline.pipeline_builder import PipelineBuilder
+from src.containers.experiment import ExperimentContext
+from src.containers.results import RunResult
 from src.optuna.runners import DirectOptunaRunner, WrapperOptunaRunner
 from src.tuning.runners import CrossValidationRunner, OptunaSearchRunner
-from src.tuning.types import RunnerResult
 
 from .tuning import OptunaOptimize
-from .types import ExperimentContext
 
 
 class OptunaExperimentManager:
@@ -27,7 +29,9 @@ class OptunaExperimentManager:
     def has_transformation(self) -> bool:
         return self.context.model_cfg.target_transformations
 
-    def _build_estimator_from_study(self, study: optuna.Study) -> BaseEstimator:
+    def _build_estimator_from_study(
+        self, study: optuna.Study
+    ) -> tuple[BaseEstimator, dict[str, Any]]:
         """
         Builds a pipeline estimator configured with the best parameters from an
         Optuna study.
@@ -37,25 +41,29 @@ class OptunaExperimentManager:
             features_cfg=self.context.features_cfg,
             transformation=study.best_params["transformation"],
         )
-        param_grid = {
+        best_params = {
             k: v for k, v in study.best_params.items() if k != "transformation"
         }
-        return estimator.set_params(**param_grid)
+        return estimator.set_params(**best_params), best_params
 
-    def manage(self) -> RunnerResult:
+    def manage(self) -> RunResult:
         if self.has_transformation:
             runner = WrapperOptunaRunner(
                 optimizer=self.optimizer,
                 runner=self.cross_runner,
             )
             study = runner.run(self.context)
-            estimator = self._build_estimator_from_study(study)
-
-            return self.cross_runner.run(
+            estimator, best_params = self._build_estimator_from_study(study)
+            runner_res = self.cross_runner.run(
                 estimator=estimator,
                 X_train=self.context.X_train,
                 X_test=self.context.X_test,
                 y_train=self.context.y_train,
+            )
+            return RunResult(
+                runner_result=runner_res,
+                param_grid=best_params,
+                transformation=study.best_params["transformation"],
             )
 
         else:
