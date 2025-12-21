@@ -1,54 +1,79 @@
-from omegaconf import DictConfig
+from src.builders.optuna.optuna_pipeline_builder import OptunaPipelineBuilder
+from src.conf.schema import FeaturesConfig, OptunaStageConfig
+from src.containers.builder import OptunaBuildResult
+from src.containers.results import StageResult
+from src.evaluation.metrics import flatten_metrics
+from src.factories.model_factory import ModelFactory
+from src.mlflow.logging import setup_mlflow
+from src.models.savers.model_saver import ModelSaver
+from src.patterns.base_pipeline import BasePipeline
+from src.serializers.experiment import ExperimentSerializer
+from src.serializers.prediction_set import PredictionSetSerializer
+from src.serializers.stage_result import StageResultSerializer
 
-from src.mlflow.logging import log_model, setup_mlflow
-from src.optuna.tuning import optimize_model
-from src.utils.grid import update_params_with_optuna
-from src.utils.loading import load_splitted_data
-from src.utils.metrics import get_metrics
-from src.utils.saving import save_model_with_metadata
-from src.utils.selection import get_model_class_and_short, pick_best
+from .manager import OptunaExperimentManager
 
 
-def run(cfg: DictConfig) -> None:
-    """
-    Optimizes hyperparameters for the best-performing model using Optuna, retrains it,
-    and logs the final version to MLflow.
-    """
-    setup_mlflow()
-    X_train, X_test, y_train, y_test = load_splitted_data(cfg)
+class OptunaPipeline(BasePipeline[OptunaBuildResult, None]):
+    def __init__(self, cfg: OptunaStageConfig):
+        self.cfg = cfg
 
-    estimator, data = pick_best(cfg.training.output_dir)
+    def build(self) -> OptunaBuildResult:
+        """
+        Constructs and returns the components required for optuna pipeline.
+        """
+        builder = OptunaPipelineBuilder(self.cfg)
+        return builder.build()
 
-    model_class, short = get_model_class_and_short(data["model"])
-    cfg.model.name = short
+    def _save_model(
+        self, model_saver: ModelSaver, result: StageResult, features: FeaturesConfig
+    ) -> None:
+        """
+        Saves the trained model along with its metadata.
+        """
+        model_saver.save_model_with_metadata(result, features)
 
-    if (optuna_results := optimize_model(model_class, X_train, y_train, cfg)) is not None:
-        study, best_params = optuna_results
+    def run(self) -> None:
+        """
+        Optimizes hyperparameters for the best-performing model using Optuna,
+        retrains it, and logs the final version to MLflow.
+        """
+        if not self.cfg.model.params:
+            print("No params to optimize, skipping optimization...")
+            return
 
-        updated_params = update_params_with_optuna(
-            data["param_grid"], optuna_params=best_params
+        setup_mlflow()
+
+        model_spec = ModelFactory.get_spec(self.cfg.model.name)
+        builder = self.build()
+        split_data = self.load_data(builder.data_loader)
+
+        context = ExperimentSerializer.from_optuna_stage(
+            cfg=self.cfg,
+            split_data=split_data,
         )
 
-        best_estimator = estimator
-        best_estimator.set_params(**updated_params)
-        best_estimator.fit(X_train, y_train)
-        y_test_pred = best_estimator.predict(X_test)
-        y_train_pred = best_estimator.predict(X_train)
+        run_result = OptunaExperimentManager(
+            context=context,
+            optimizer=builder.optimizer,
+            cross_runner=builder.cross_runner,
+            search_runner=builder.search_runner,
+        ).manage()
 
-        metrics = get_metrics(y_train, y_test, y_train_pred, y_test_pred)
+        pred_set = PredictionSetSerializer.from_stage_pipeline(
+            run_result.runner_result, split_data
+        )
+        metrics = self._compute_metrics(pred_set)
 
-        log_model(
-            estimator=best_estimator,
-            param_grid=updated_params,
-            X_train=X_train,
-            model=model_class,
-            metrics=metrics,
-            folds_scores=None,
-            folds_scores_mean=None,
-            study=study,
-            transformer_name=data["transformer"],
+        stage_result = StageResultSerializer.from_stage(
+            result=run_result,
+            metrics=flatten_metrics(metrics),
+            model_name=model_spec.model_class.__name__,
         )
 
-        save_model_with_metadata(
-            best_estimator, model_class.__name__, metrics, updated_params, cfg
+        self._log_model(stage_result, X_train=split_data.X_train, register=True)
+        self._save_model(
+            model_saver=builder.model_saver,
+            result=stage_result,
+            features=self.cfg.features,
         )
