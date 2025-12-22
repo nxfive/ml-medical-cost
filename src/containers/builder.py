@@ -21,6 +21,7 @@ class TrainingBuildResult:
 class OptunaBuildResult:
     data_loader: DataLoader
     model_saver: ModelSaver
+    model_spec: ModelSpec
     optimizer: OptunaOptimize
     cross_runner: CrossValidationRunner
     search_runner: OptunaSearchRunner
