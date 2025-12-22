@@ -1,6 +1,6 @@
 from typing import Any
 
-from .types import Prefixes
+from .constants import Prefixes
 
 
 class ParamGridPrefixer:
