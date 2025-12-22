@@ -4,7 +4,7 @@ from src.containers.builder import OptunaBuildResult
 from src.containers.results import StageResult
 from src.evaluation.metrics import flatten_metrics
 from src.factories.model_factory import ModelFactory
-from src.mlflow.logging import setup_mlflow
+from src.mlflow.logger import logger
 from src.models.savers.model_saver import ModelSaver
 from src.patterns.base_pipeline import BasePipeline
 from src.serializers.experiment import ExperimentSerializer
@@ -42,8 +42,6 @@ class OptunaPipeline(BasePipeline[OptunaBuildResult, None]):
             print("No params to optimize, skipping optimization...")
             return
 
-        setup_mlflow()
-
         model_spec = ModelFactory.get_spec(self.cfg.model.name)
         builder = self.build()
         split_data = self.load_data(builder.data_loader)
@@ -71,7 +69,7 @@ class OptunaPipeline(BasePipeline[OptunaBuildResult, None]):
             model_name=model_spec.model_class.__name__,
         )
 
-        self._log_model(stage_result, X_train=split_data.X_train, register=True)
+        self._log_model(logger, stage_result, X_train=split_data.X_train, register=True)
         self._save_model(
             model_saver=builder.model_saver,
             result=stage_result,
