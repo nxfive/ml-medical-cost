@@ -4,7 +4,7 @@ from src.conf.schema import TrainingStageConfig
 from src.containers.builder import TrainingBuildResult
 from src.containers.results import StageResult
 from src.evaluation.metrics import flatten_metrics
-from src.mlflow.logging import setup_mlflow
+from src.mlflow.logger import logger
 from src.models.savers.run_saver import RunSaver
 from src.patterns.base_pipeline import BasePipeline
 from src.serializers.prediction_set import PredictionSetSerializer
@@ -36,7 +36,6 @@ class TrainingPipeline(BasePipeline[TrainingBuildResult, None]):
         Trains and evaluates all defined models using cross-validation, logs results
         to MLflow and saves pipeline and training results to disk.
         """
-        setup_mlflow()
         builder = self.build()
         split_data = self.load_data(builder.loader)
         model_name = builder.model_spec.model_class.__name__
@@ -65,6 +64,7 @@ class TrainingPipeline(BasePipeline[TrainingBuildResult, None]):
                 model_name=model_name,
             )
             self._log_model(
+                logger,
                 stage_result,
                 X_train=split_data.X_train,
             )
