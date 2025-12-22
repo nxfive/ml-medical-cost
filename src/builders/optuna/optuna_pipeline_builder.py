@@ -1,8 +1,8 @@
 import optuna
+from src.builders.base.base_pipeline_builder import BasePipelineBuilder
 from src.conf.schema import OptunaStageConfig
 from src.containers.builder import OptunaBuildResult
-from src.data.core import DataLoader, DataSaver
-from src.factories.io_factory import IOFactory
+from src.data.core import DataSaver
 from src.factories.pruner_factory import PrunerFactory
 from src.io.file_ops import PathManager
 from src.models.savers.model_saver import ModelSaver
@@ -11,20 +11,10 @@ from src.training.cv import get_cv
 from src.tuning.runners import CrossValidationRunner, OptunaSearchRunner
 
 
-class OptunaPipelineBuilder:
-    def __init__(self, cfg: OptunaStageConfig):
-        self.cfg = cfg
-
-    @staticmethod
-    def _build_data_io() -> tuple[DataLoader, DataSaver]:
-        """
-        Builds the DataLoader and DataSaver using IOFactory readers/writers.
-        """
-        readers = IOFactory.create_readers()
-        writers = IOFactory.create_writers()
-        return DataLoader(readers), DataSaver(writers)
-
-    def _build_model_saver(self, data_saver: DataSaver) -> ModelSaver:
+class OptunaPipelineBuilder(
+    BasePipelineBuilder[OptunaStageConfig, ModelSaver, OptunaBuildResult]
+):
+    def _build_saver(self, data_saver: DataSaver) -> ModelSaver:
         """
         Builds a ModelSaver that saves trained model.
         """
@@ -70,13 +60,15 @@ class OptunaPipelineBuilder:
         """
         PathManager.ensure_dir(self.cfg.models_dir.output_dir)
         data_loader, data_saver = self._build_data_io()
-        model_saver = self._build_model_saver(data_saver)
+        model_saver = self._build_saver(data_saver)
+        model_spec = self._build_model_spec()
         optimizer = self._build_optimizer()
         cross_runner, search_runner = self._build_runners(study=optimizer.study)
 
         return OptunaBuildResult(
             data_loader=data_loader,
             model_saver=model_saver,
+            model_spec=model_spec,
             optimizer=optimizer,
             cross_runner=cross_runner,
             search_runner=search_runner,
