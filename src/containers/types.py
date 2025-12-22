@@ -20,6 +20,15 @@ RunnerType = TypeVar("RunnerType", bound=BaseEstimator)
 """Type returned by run() method of the base runner"""
 OptunaRunnerResult = TypeVar("OptunaRunnerResult")
 
+"""Type of stage configuration in pipeline base builder"""
+StageConfigType = TypeVar("StageConfigType")
+
+"""Type returned by _build_saver() in pipeline base builder"""
+SaverType = TypeVar("SaverType")
+
+"""Type returned by build() in pipeline base builder"""
+BuildResultType = TypeVar("BuildResultType")
+
 
 class SplitDataDict(TypedDict):
     X_train: pd.DataFrame
