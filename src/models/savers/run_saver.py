@@ -10,15 +10,15 @@ from src.serializers.stage_result import StageResultSerializer
 class RunSaver:
     def __init__(
         self,
-        trainig_dir: TrainingDir,
+        training_dir: TrainingDir,
         data_saver: DataSaver,
     ):
-        self.training_dir = trainig_dir
+        self.training_dir = training_dir
         self.data_saver = data_saver
 
     def save(self, run_result: StageResult) -> None:
         """
-        Saves estimator and metrics to a timestamped directory under 
+        Saves estimator and metrics to a timestamped directory under
         the training output path.
         """
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
