@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
 
-from src.tuning.types import RunnerResult, RunnerType
+from src.containers.results import RunnerResult
+from src.containers.types import RunnerType
 
 from .base_runner import BaseRunner
 
@@ -41,7 +42,7 @@ class SearchRunner(BaseRunner, Generic[RunnerType], ABC):
         and generates predictions on the training and test sets.
         """
         grid_search = self.perform_search(estimator, param_grid)
-        trained = self.fit_estimator(grid_search, X_train, y_train, return_best=True)
+        trained = self.fit_estimator(grid_search, X_train, y_train)
         folds_scores = self.get_folds_scores(grid_search)
 
         return self._collect_results(trained, folds_scores, X_train, X_test)
