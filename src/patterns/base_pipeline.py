@@ -9,7 +9,7 @@ from src.containers.types import BuildResultType, RunResultType
 from src.data.core import DataLoader
 from src.dto.metrics import AllMetrics
 from src.evaluation.metrics import get_metrics
-from src.mlflow.logging import log_model
+from src.mlflow.logger import MLflowLogger
 
 
 class BasePipeline(ABC, Generic[BuildResultType, RunResultType]):
@@ -41,9 +41,12 @@ class BasePipeline(ABC, Generic[BuildResultType, RunResultType]):
 
     @staticmethod
     def _log_model(
-        stage_result: StageResult, X_train: pd.DataFrame, register: bool = False
+        logger: MLflowLogger,
+        stage_result: StageResult,
+        X_train: pd.DataFrame,
+        register: bool = False,
     ) -> None:
         """
         Logs the training results and metrics to MLflow.
         """
-        log_model(result=stage_result, X_train=X_train, register=register)
+        logger.log_model(result=stage_result, X_train=X_train, register=register)
