@@ -37,7 +37,16 @@ The project was designed in accordance with:
 
 The project is organized into explicit execution stages, each responsible for a single part of the machine learning lifecycle.
 
-### 1️⃣ Training Stage (stage=training)
+### 1️⃣ Data Stage (stage=data)
+
+- Dataset is downloaded from Kaggle
+- Categorical features are converted
+- Dataset is splited into training and test sets
+- Processed data is saved to disk as Parquet files
+
+This stage ensures clean, ready-to-use data for downstream stages
+
+### 2️⃣ Training Stage (stage=training)
 
 - Each model is trained once per stage
 - Models are evaluated using cross-validation and train/test metrics
@@ -45,7 +54,7 @@ The project is organized into explicit execution stages, each responsible for a 
 
 The goal of this stage is model comparison, not heavy optimization. <br>Prevents unnecessary hyperparameter tuning on weak models.
 
-### 2️⃣ Optimization Stage (stage=optuna)
+### 3️⃣ Optimization Stage (stage=optuna)
 
 - Only the best-performing model from the training stage is selected
 - Hyperparameter optimization is performed using Optuna
@@ -56,7 +65,7 @@ The optimized model is:
 
 This stage focuses on improving model, keeping optimization efficient and controlled.
 
-### 3️⃣ Serving Stage
+### 4️⃣ Serving Stage
 
 - The selected model is loaded directly from MLflow
 - The model is registered in BentoML
