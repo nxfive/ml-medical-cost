@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import KFold, cross_val_score
 
-from src.tuning.types import RunnerResult
+from src.containers.results import RunnerResult
 
 from .base_runner import BaseRunner
 
