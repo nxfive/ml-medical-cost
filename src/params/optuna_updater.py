@@ -24,11 +24,7 @@ class OptunaParamUpdater:
             if key in optuna_params:
                 continue
 
-            if not isinstance(values, list) or not values:
-                raise ValueError(f"Invalid parameter grid for '{key}': {values}")
-
             first_value = values[0]
-
             if isinstance(first_value, (bool, str)):
                 missing_params[key] = {"choices": values}
 
@@ -44,10 +40,8 @@ class OptunaParamUpdater:
                     "max": max_val,
                     "step": step,
                 }
-
             else:
                 raise ValueError(
                     f"Unsupported parameter type for '{key}': {type(first_value)}"
                 )
-
         return {**optuna_params, **missing_params}
