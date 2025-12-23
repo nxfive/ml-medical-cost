@@ -1,9 +1,9 @@
 from typing import Any
 
 import optuna
-from src.params.grid import ParamGridPrefixer
 from src.params.optuna_grid import OptunaGrid
 from src.params.optuna_updater import OptunaParamUpdater
+from src.params.prefixer import ParamGridPrefixer
 from src.tuning.transformers.registry import TRANSFORMERS
 
 from .optuna_space_builder import OptunaSpaceBuilder

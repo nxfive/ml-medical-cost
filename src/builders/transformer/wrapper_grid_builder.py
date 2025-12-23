@@ -1,4 +1,4 @@
-from src.params.grid import ParamGridPrefixer
+from src.params.prefixer import ParamGridPrefixer
 from src.params.validator import ParamValidator
 
 

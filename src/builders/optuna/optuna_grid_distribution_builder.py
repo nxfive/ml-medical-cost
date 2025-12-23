@@ -1,7 +1,7 @@
 from typing import Any
 
 from optuna.distributions import BaseDistribution
-from src.params.grid import ParamGridPrefixer
+from src.params.prefixer import ParamGridPrefixer
 
 from .optuna_space_builder import OptunaSpaceBuilder
 
