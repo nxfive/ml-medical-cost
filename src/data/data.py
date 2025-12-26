@@ -3,8 +3,10 @@ from pathlib import Path
 import pandas as pd
 
 from src.data.split import split_features_target, split_train_test
+from src.logger.setup import logger
 
 from .core import DataFetcher, DataSaver
+from .split import get_missing_split_files
 
 
 class Data:
@@ -27,6 +29,11 @@ class Data:
         Splits a DataFrame into features (X) and target (y), then into training and test sets,
         and save the resulting datasets as Parquet files.
         """
+        missing_files = get_missing_split_files(self.processed_dir)
+        if not missing_files:
+            logger.debug("Splits already exist, skipping")
+            return
+
         X, y = split_features_target(df, target_col)
         split_data = split_train_test(X, y)
         self.data_saver.save_splitted_data(
