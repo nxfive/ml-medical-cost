@@ -11,8 +11,10 @@ from src.io.file_ops import PathManager
 from src.logger.setup import logger
 from src.serializers.split_data import SplitDataSerializer
 
+from .constants import SPLIT_FILES
 from .converters import CSVToParquetConverter
 from .download import DatasetDownloader
+from .split import get_missing_split_files
 
 
 class DataLoader:
@@ -23,10 +25,17 @@ class DataLoader:
         """
         Loads train/test splits from processed directory into a SplitData object.
         """
-        files = ["X_train", "X_test", "y_train", "y_test"]
+        missing_files = get_missing_split_files(processed_dir)
+        if missing_files:
+            missing_str = ", ".join(missing_files)
+            logger.error(f"Missing files: {missing_str} in {processed_dir}")
+            raise FileNotFoundError(
+                f"The following required files are missing in {processed_dir}: {missing_str}"
+            )
+
         data = {
             file: self.readers.parquet.read(processed_dir / f"{file}.parquet")
-            for file in files
+            for file in SPLIT_FILES
         }
         return SplitDataSerializer.from_dict(data)
 
