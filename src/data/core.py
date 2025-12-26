@@ -8,6 +8,7 @@ from src.containers.data import SplitData
 from src.containers.io import Readers, Writers
 from src.containers.types import SplitDataDict
 from src.io.file_ops import PathManager
+from src.logger.setup import logger
 from src.serializers.split_data import SplitDataSerializer
 
 from .converters import CSVToParquetConverter
@@ -88,6 +89,7 @@ class DataFetcher:
         parquet_path = self.raw_dir / filename
 
         if PathManager.exists(parquet_path):
+            logger.debug("Dataset is already downloaded")
             return self.readers.parquet.read(parquet_path)
 
         csv_path = self.downloader.download()
