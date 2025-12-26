@@ -1,9 +1,14 @@
+from pathlib import Path
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from src.containers.data import SplitData
 from src.containers.types import SplitDataDict
+from src.io.file_ops import PathManager
 from src.serializers.split_data import SplitDataSerializer
+
+from .constants import SPLIT_FILES
 
 
 def split_features_target(
@@ -33,3 +38,14 @@ def split_train_test(
         y_test=y_test,
     )
     return SplitDataSerializer.to_dict(split_data)
+
+
+def get_missing_split_files(processed_dir: Path) -> list[str]:
+    """
+    Check which expected split files are missing in the processed directory.
+    """
+    return [
+        file
+        for file in SPLIT_FILES
+        if not PathManager.exists(processed_dir / f"{file}.parquet")
+    ]
